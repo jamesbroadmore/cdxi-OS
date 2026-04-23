@@ -1,0 +1,123 @@
+{
+  "project_name": "cdxi OS",
+  "domain": "AI-native venture operating system",
+  "theme": "hybrid",
+  "archetype": "Archetype 4 (Swiss & High-Contrast) + Luxury",
+  "core_principles": [
+    "Minimal luxury and mission-control feel",
+    "Data-rich but visually clean (Control Room Grid)",
+    "Glass layers, soft shadows, and modular cards",
+    "Dense command palettes (Cmd+K) for power users"
+  ],
+  "typography": {
+    "headings": {
+      "family": "Cabinet Grotesk",
+      "weights": ["500", "700"],
+      "usage": "Use for all H1, H2, H3, and modular card titles.",
+      "styles": "tracking-tight leading-tight"
+    },
+    "body": {
+      "family": "Manrope",
+      "weights": ["400", "500", "600"],
+      "usage": "Use for body text, form labels, smaller UI elements."
+    },
+    "mono": {
+      "family": "JetBrains Mono",
+      "usage": "Use for numerical data, financial KPIs, and code/automation IDs.",
+      "styles": "tracking-tighter"
+    },
+    "hierarchy": {
+      "h1": "text-4xl sm:text-5xl font-bold tracking-tight",
+      "h2": "text-2xl sm:text-3xl font-semibold tracking-tight",
+      "h3": "text-xl sm:text-2xl font-medium tracking-tight",
+      "h4": "text-lg sm:text-xl font-medium",
+      "body": "text-sm sm:text-base",
+      "label": "text-xs font-semibold uppercase tracking-widest text-muted-foreground"
+    }
+  },
+  "colors": {
+    "dark": {
+      "background": "bg-zinc-950",
+      "surface": "bg-white/5 backdrop-blur-2xl border-white/10",
+      "surface_hover": "hover:bg-white/10",
+      "primary": "bg-white text-black",
+      "primary_hover": "hover:bg-neutral-200",
+      "accent": "text-blue-500",
+      "muted": "text-zinc-400",
+      "border": "border-white/10",
+      "glow": "radial-gradient(circle at 50% -20%, rgba(37,99,235,0.15), transparent 70%)"
+    },
+    "light": {
+      "background": "bg-zinc-50",
+      "surface": "bg-white/70 backdrop-blur-xl border-black/5",
+      "surface_hover": "hover:bg-white/90",
+      "primary": "bg-zinc-950 text-white",
+      "primary_hover": "hover:bg-zinc-800",
+      "accent": "text-blue-600",
+      "muted": "text-zinc-500",
+      "border": "border-black/5",
+      "glow": "radial-gradient(circle at 50% -20%, rgba(37,99,235,0.05), transparent 70%)"
+    },
+    "status": {
+      "success": "text-emerald-500 bg-emerald-500/10 border-emerald-500/20",
+      "warning": "text-amber-500 bg-amber-500/10 border-amber-500/20",
+      "danger": "text-rose-500 bg-rose-500/10 border-rose-500/20",
+      "info": "text-blue-500 bg-blue-500/10 border-blue-500/20"
+    }
+  },
+  "layout_spacing": {
+    "grid_system": "MODE B: THE CONTROL ROOM GRID (Base: grid-cols-1 md:grid-cols-3 lg:grid-cols-4, tight gap-4 or gap-6)",
+    "container_padding": "p-6 sm:p-8 md:p-10",
+    "card_padding": "p-5 or p-6",
+    "border_radius": "rounded-2xl for main cards, rounded-xl for inner elements, rounded-full for buttons"
+  },
+  "visual_effects": {
+    "glassmorphism": "backdrop-blur-2xl with 1px semi-transparent inner border to ground the card",
+    "shadows": {
+      "dark": "shadow-[0_8px_32px_rgba(0,0,0,0.4)]",
+      "light": "shadow-[0_8px_32px_rgba(0,0,0,0.06)]"
+    },
+    "motion": "Use Framer Motion for ambient background rotation, staggered bento grid item entrance, and Cmd+K palette scale-in. Use CSS transitions (transform 0.2s ease, opacity 0.2s ease) for hover states."
+  },
+  "components": {
+    "navigation": "Three-pane layout: Fixed Left Rail Nav (w-64 or w-20 collapsed) + Top Header (Workspace Switcher + Search/Cmd+K) + Fixed Right Sidebar Dock (AI Copilot/Helix).",
+    "executive_dashboard": "KPI Cockpit: Grid of metric cards. Revenue, Pipeline, MRR, Client Health, Team Capacity, Automation Savings. Recharts for dynamic sparklines inside cards.",
+    "crm_kanban": "Horizontal scroll area with column headers. Drag and drop style modular cards. Pipeline stages: Lead, Discovery, Proposal, Won, Onboard, Delivery, Growth, Renewal.",
+    "ai_copilot": "Slide-out panel or right-dock. Theme it with a subtle amber/blue gradient mesh background to distinguish 'Agent OS (Helix)' from standard UI.",
+    "command_palette": "Triggered via Cmd+K. Huge text input (text-2xl), instantly filters global search, actions, and navigation. Dense, keyboard-first.",
+    "buttons": "Always explicitly define hover text color (e.g. hover:bg-neutral-200 hover:text-black).",
+    "data_display": "Use Recharts. Minimalist axes, remove grid lines or use very subtle dashed lines. Tooltips must use glassmorphism styles."
+  },
+  "testing": {
+    "attributes": "All interactive elements must have data-testid (e.g., data-testid='sidebar-crm-link', data-testid='kpi-revenue-card')"
+  },
+  "assets": {
+    "icons": "lucide-react",
+    "images": [
+      {
+        "category": "team_avatars",
+        "url": "https://images.unsplash.com/photo-1771898343647-bd979ad8cca5?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwxfHxwcm9mZXNzaW9uYWwlMjBleGVjdXRpdmUlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3Njk4NDkxN3ww&ixlib=rb-4.1.0&q=85",
+        "description": "Executive avatar"
+      },
+      {
+        "category": "team_avatars",
+        "url": "https://images.unsplash.com/photo-1769636929261-e913ed023c83?crop=entropy&cs=srgb&fm=jpg&ixid=M3w3NTY2NjZ8MHwxfHNlYXJjaHwzfHxwcm9mZXNzaW9uYWwlMjBleGVjdXRpdmUlMjBoZWFkc2hvdCUyMHBvcnRyYWl0fGVufDB8fHx8MTc3Njk4NDkxN3ww&ixlib=rb-4.1.0&q=85",
+        "description": "Team member avatar"
+      },
+      {
+        "category": "team_avatars",
+        "url": "https://images.pexels.com/photos/37148339/pexels-photo-37148339.jpeg?auto=compress&cs=tinysrgb&dpr=2&h=650&w=940",
+        "description": "Client contact avatar"
+      }
+    ]
+  },
+  "instructions_to_main_agent": [
+    "Prioritize HTML/Tailwind for the dashboard layout (Control Room grid). Use pure div grids for complex bento metrics.",
+    "Use Shadcn UI components for complex interactions: Dialog (Command Palette), Select (Workspace Switcher), Tabs (Client/Projects view).",
+    "Ensure 'REACT_APP_BACKEND_URL' is used for all fetch requests.",
+    "Implement Framer Motion for layout transitions and staggered entrances.",
+    "Do NOT use 'Inter' for headings. Inject Cabinet Grotesk from Fontshare or Google Fonts.",
+    "Never use generic placeholder images. Use provided assets.",
+    "Strictly follow the light/dark mode variants using standard Tailwind 'dark:' prefix, and setup a global theme provider."
+  ]
+}

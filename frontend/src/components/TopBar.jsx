@@ -29,7 +29,7 @@ export default function TopBar({ onOpenCopilot, onOpenPalette, onOpenNewWorkspac
         </button>
         {open && (
           <div className="absolute left-0 top-11 glass rounded-xl p-1.5 w-64 z-30" data-testid="workspace-menu">
-            <div className="cdxi-label px-3 py-2">Workspaces</div>
+            <div className="cdxi-label px-3 py-2">Brand workspaces</div>
             {workspaces.map((w) => (
               <button
                 key={w.id}
@@ -50,7 +50,7 @@ export default function TopBar({ onOpenCopilot, onOpenPalette, onOpenNewWorkspac
               className="w-full flex items-center gap-2 px-3 py-2 rounded-lg hover:bg-muted text-sm text-muted-foreground"
               data-testid="new-workspace"
             >
-              <Plus className="w-3 h-3" /> New workspace
+              <Plus className="w-3 h-3" /> New brand workspace
             </button>
           </div>
         )}

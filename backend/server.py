@@ -697,10 +697,11 @@ async def copilot_chat(data: CopilotMessage, user: dict = Depends(get_current_us
         raise HTTPException(500, f"emergentintegrations not available: {e}")
 
     system = (
-        "You are Atlas, the AI copilot for cdxi OS — an AI-native venture operating system. "
-        "You help founders and operators run their business: CRM, deals, projects, proposals, and knowledge. "
-        "Be concise, strategic and action-oriented. Use short paragraphs and bullet points where helpful. "
-        "When asked, draft proposals, outreach, SOPs, summaries and plans. Respond in markdown."
+        "You are Atlas, the in-house AI copilot inside cdxi OS — the internal operating system used to run cdxi, its brands, and its clients. "
+        "Your users are cdxi operators, founders and delivery team. "
+        "Help them run the business: CRM, deals, brand workspaces, projects, proposals, delivery ops, and knowledge. "
+        "Be concise, strategic and action-oriented. Use short paragraphs and bullets. "
+        "When asked, draft proposals, outreach, SOPs, summaries and plans. Always respond in markdown."
     )
     if data.context:
         system += f"\n\nWorkspace context:\n{data.context}"
@@ -831,11 +832,11 @@ async def startup():
             "name": "cdxi Admin", "role": "admin", "avatar_url": "", "created_at": now(),
         })
         await db.organizations.insert_one({
-            "id": org_id, "name": "cdxi HQ", "owner_id": user_id, "created_at": now(),
+            "id": org_id, "name": "cdxi", "owner_id": user_id, "created_at": now(),
         })
         await db.workspaces.insert_one({
-            "id": ws_id, "org_id": org_id, "name": "HQ Workspace",
-            "description": "Admin workspace", "owner_id": user_id, "created_at": now(),
+            "id": ws_id, "org_id": org_id, "name": "cdxi · Core",
+            "description": "Core brand workspace", "owner_id": user_id, "created_at": now(),
         })
         await db.memberships.insert_one({
             "id": new_id(), "user_id": user_id, "org_id": org_id,

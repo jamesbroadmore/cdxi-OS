@@ -61,7 +61,7 @@ export default function Proposals() {
         <div>
           <div className="cdxi-label">Vault · Proposal engine</div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Proposals</h1>
-          <p className="text-sm text-muted-foreground mt-1">Scope, pricing and close deals.</p>
+          <p className="text-sm text-muted-foreground mt-1">Scope, price and close work for cdxi and its brands.</p>
         </div>
         <Button onClick={openNew} data-testid="new-proposal-btn"><Plus className="w-4 h-4" /> New proposal</Button>
       </div>

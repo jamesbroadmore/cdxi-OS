@@ -82,10 +82,10 @@ function AppShell() {
               <Route path="/proposals" element={<Proposals />} />
               <Route path="/agents" element={<Agents />} />
               <Route path="/settings" element={<Settings />} />
-              <Route path="/automations" element={<ComingSoon title="Automations" codename="Forge · Automation OS" description="Workflow canvas, triggers, AI steps, webhooks and approval gates." />} />
-              <Route path="/knowledge" element={<ComingSoon title="Knowledge" codename="Vault · Knowledge OS" description="Company brain — SOPs, playbooks, semantic search and RAG-powered assistants." />} />
-              <Route path="/finance" element={<ComingSoon title="Finance" codename="Pulse · Finance OS" description="Revenue, invoicing, cashflow, forecasting and deal economics." />} />
-              <Route path="/studio" element={<ComingSoon title="Studio" codename="Orbit · Venture Studio" description="Idea vault, validation lab, portfolio operating layer." />} />
+              <Route path="/automations" element={<ComingSoon title="Automations" codename="Forge · Automation OS" description="Workflow canvas for cdxi's internal automations — triggers, AI steps, webhooks and approval gates across brands and clients." />} />
+              <Route path="/knowledge" element={<ComingSoon title="Knowledge" codename="Vault · Knowledge OS" description="cdxi's company brain — SOPs, playbooks, brand guidelines, semantic search and RAG-powered assistants." />} />
+              <Route path="/finance" element={<ComingSoon title="Finance" codename="Pulse · Finance OS" description="Revenue, invoicing, cashflow, forecasting and deal economics across cdxi and every brand under it." />} />
+              <Route path="/studio" element={<ComingSoon title="Studio" codename="Orbit · Venture Studio" description="Idea vault, validation lab and portfolio layer for new cdxi brands and ventures." />} />
               <Route path="*" element={<Navigate to="/" replace />} />
             </Routes>
           </div>
@@ -95,9 +95,9 @@ function AppShell() {
       <CommandPalette open={palette} onClose={() => setPalette(false)} onOpenCopilot={() => setCopilot(true)} />
       <CopilotDock open={copilot} onClose={() => setCopilot(false)} />
 
-      <Modal open={wsModal} onClose={() => setWsModal(false)} title="New workspace">
+      <Modal open={wsModal} onClose={() => setWsModal(false)} title="New brand workspace">
         <form onSubmit={createWs} className="space-y-4">
-          <div><Label>Name</Label><Input value={wsName} onChange={(e) => setWsName(e.target.value)} placeholder="e.g. Growth Lab" data-testid="new-ws-name" autoFocus /></div>
+          <div><Label>Brand name</Label><Input value={wsName} onChange={(e) => setWsName(e.target.value)} placeholder="e.g. cdxi · Growth Lab" data-testid="new-ws-name" autoFocus /></div>
           <div className="flex justify-end gap-2">
             <Button type="button" variant="ghost" onClick={() => setWsModal(false)}>Cancel</Button>
             <Button type="submit" data-testid="new-ws-submit">Create</Button>

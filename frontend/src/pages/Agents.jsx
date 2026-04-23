@@ -18,7 +18,7 @@ export default function Agents() {
         <div>
           <div className="cdxi-label">Helix · Agent OS</div>
           <h1 className="font-display text-3xl font-bold tracking-tight">AI workforce</h1>
-          <p className="text-sm text-muted-foreground mt-1">Agent personas for growth, delivery and operations. Hire one. Orchestrate many.</p>
+          <p className="text-sm text-muted-foreground mt-1">Internal AI workforce for cdxi — growth, delivery and ops agents. Hire one. Orchestrate many.</p>
         </div>
         <Badge tone="info">6 agents online</Badge>
       </div>

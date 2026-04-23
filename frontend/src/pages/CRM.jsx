@@ -89,7 +89,7 @@ export default function CRM() {
         <div>
           <div className="cdxi-label">Pulse · Client OS</div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Pipeline</h1>
-          <p className="text-sm text-muted-foreground mt-1">Drag deals across the venture lifecycle.</p>
+          <p className="text-sm text-muted-foreground mt-1">Drag deals across the client lifecycle for this brand.</p>
         </div>
         <Button onClick={openNew} data-testid="new-deal-btn"><Plus className="w-4 h-4" /> New deal</Button>
       </div>

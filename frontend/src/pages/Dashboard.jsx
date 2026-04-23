@@ -73,9 +73,9 @@ export default function Dashboard() {
           <div>
             <div className="cdxi-label">Atlas · Command Deck</div>
             <h1 className="font-display text-3xl lg:text-4xl font-bold tracking-tight mt-1">
-              Operate the venture.
+              Running cdxi.
             </h1>
-            <p className="text-muted-foreground mt-1 text-sm">Live view across revenue, pipeline, delivery and your AI workforce.</p>
+            <p className="text-muted-foreground mt-1 text-sm">Live view across cdxi's brands, clients, delivery and AI workforce.</p>
           </div>
           <div className="flex items-center gap-2">
             <Badge tone="success">● systems nominal</Badge>
@@ -180,7 +180,7 @@ export default function Dashboard() {
           <div className="relative">
             <div className="cdxi-label">Operating mode</div>
             <h3 className="font-display text-2xl font-semibold mt-1">Executive</h3>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">You're running the venture from the Atlas command deck. Switch modes for focus, building, or agent ops.</p>
+            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">You're running cdxi from the Atlas command deck. Switch modes for focus, building, or agent ops.</p>
             <div className="mt-4 space-y-2">
               {["Focus Mode", "Executive Mode", "Builder Mode", "Agent Ops"].map((m, i) => (
                 <div key={m} className={`flex items-center justify-between text-sm px-3 py-2 rounded-lg ${i === 1 ? "bg-foreground text-background" : "bg-muted/40"}`}>

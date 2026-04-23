@@ -170,7 +170,7 @@ export default function Projects() {
         <div>
           <div className="cdxi-label">Orbit · Delivery OS</div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Projects</h1>
-          <p className="text-sm text-muted-foreground mt-1">Active engagements, delivery and team workload.</p>
+          <p className="text-sm text-muted-foreground mt-1">Active cdxi & brand engagements — delivery, milestones and workload.</p>
         </div>
         <Button onClick={openNew} data-testid="new-project-btn"><Plus className="w-4 h-4" /> New project</Button>
       </div>

@@ -33,7 +33,7 @@ export default function Sidebar({ collapsed, setCollapsed }) {
         ) : (
           <div className="flex flex-col leading-none">
             <div className="font-logo text-2xl lowercase tracking-tight">cdxi</div>
-            <div className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground mt-1">Venture OS</div>
+            <div className="text-[9px] uppercase tracking-[0.3em] text-muted-foreground mt-1">Internal OS</div>
           </div>
         )}
       </div>

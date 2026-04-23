@@ -50,7 +50,7 @@ export default function Clients() {
         <div>
           <div className="cdxi-label">Clients</div>
           <h1 className="font-display text-3xl font-bold tracking-tight">Accounts</h1>
-          <p className="text-sm text-muted-foreground mt-1">All relationships, health and portal access in one place.</p>
+          <p className="text-sm text-muted-foreground mt-1">All cdxi client relationships, health and portal access in one place.</p>
         </div>
         <Button onClick={openNew} data-testid="new-client-btn"><Plus className="w-4 h-4" /> New client</Button>
       </div>

@@ -34,9 +34,9 @@ export default function CopilotDock({ open, onClose }) {
   };
 
   const quickPrompts = [
-    "Summarize my pipeline risks",
-    "Draft a 3-step outreach for a SaaS prospect",
-    "Suggest this week's priorities",
+    "Summarize this brand's pipeline risks",
+    "Draft a 3-step outreach for a cdxi prospect",
+    "Suggest this week's priorities for delivery",
     "Write a proposal intro for a growth retainer",
   ];
 
@@ -78,7 +78,7 @@ export default function CopilotDock({ open, onClose }) {
               {messages.length === 0 && (
                 <div className="space-y-4">
                   <div className="text-sm text-muted-foreground leading-relaxed">
-                    Hi — I'm <span className="font-display font-semibold text-foreground">Atlas</span>. I can draft proposals, summarize your pipeline, suggest priorities, or anything else you'd ask a sharp co-founder.
+                    Hi — I'm <span className="font-display font-semibold text-foreground">Atlas</span>, cdxi's in-house copilot. Ask me to draft proposals, summarize a brand's pipeline, map delivery priorities, or anything else you'd ask a sharp internal operator.
                   </div>
                   <div className="cdxi-label">Try</div>
                   <div className="space-y-2">

@@ -37,7 +37,7 @@ export default function Login() {
       <div className="relative z-10 flex flex-col justify-between p-10 lg:p-14">
         <div className="flex flex-col leading-none">
           <div className="font-logo text-3xl lowercase tracking-tight">cdxi</div>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-1.5">Venture Operating System</div>
+          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-1.5">Internal · Brands & Clients</div>
         </div>
 
         <motion.div
@@ -45,14 +45,14 @@ export default function Login() {
           className="max-w-lg"
         >
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs mb-5">
-            <Sparkles className="w-3 h-3 text-blue-500" /> v1.0 Strategic Platform
+            <Sparkles className="w-3 h-3 text-blue-500" /> Internal · v1.0
           </div>
           <h1 className="font-display text-5xl lg:text-6xl font-bold leading-[1.02] tracking-tight">
-            Operate the venture.<br />
-            <span className="text-muted-foreground">Automate the growth.</span>
+            Run cdxi.<br />
+            <span className="text-muted-foreground">Every brand. Every client.</span>
           </h1>
           <p className="mt-6 text-muted-foreground leading-relaxed">
-            cdxi OS is the AI-native operating system for running service businesses, managing clients, orchestrating agents and scaling digital ventures — from a single control layer.
+            cdxi OS is our internal operating system — the single control layer we use to run cdxi, its brands, its clients and the delivery engine behind everything we ship.
           </p>
           <div className="mt-8 flex flex-wrap gap-2">
             {["Atlas · Command", "Forge · Automations", "Helix · Agents", "Vault · Knowledge", "Pulse · Analytics"].map((n) => (
@@ -61,7 +61,7 @@ export default function Login() {
           </div>
         </motion.div>
 
-        <div className="text-xs text-muted-foreground">© 2026 cdxi Labs · Built for operators, founders and venture studios.</div>
+        <div className="text-xs text-muted-foreground">© 2026 cdxi · Internal tool. Restricted to cdxi operators and invited collaborators.</div>
       </div>
 
       <div className="relative z-10 flex items-center justify-center p-8 lg:p-14">
@@ -71,8 +71,8 @@ export default function Login() {
           className="glass w-full max-w-md rounded-2xl p-8"
           data-testid="login-form"
         >
-          <h2 className="font-display text-2xl font-semibold">Sign in to your workspace</h2>
-          <p className="text-sm text-muted-foreground mt-1">Welcome back, operator.</p>
+          <h2 className="font-display text-2xl font-semibold">Sign in</h2>
+          <p className="text-sm text-muted-foreground mt-1">cdxi operators only.</p>
 
           <div className="mt-6 space-y-4">
             <div>
@@ -94,8 +94,8 @@ export default function Login() {
           </div>
 
           <div className="text-center text-sm">
-            Need an account?{" "}
-            <Link to="/register" className="text-blue-500 hover:text-blue-400 font-semibold" data-testid="login-register-link">Create workspace</Link>
+            New operator?{" "}
+            <Link to="/register" className="text-blue-500 hover:text-blue-400 font-semibold" data-testid="login-register-link">Request access</Link>
           </div>
 
           <div className="mt-6 rounded-xl border border-border bg-muted/40 p-3 text-xs font-mono text-muted-foreground">

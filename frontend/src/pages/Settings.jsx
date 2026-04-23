@@ -45,7 +45,7 @@ export default function Settings() {
       </Card>
 
       <Card className="p-6">
-        <div className="cdxi-label">Workspaces</div>
+        <div className="cdxi-label">Brand workspaces</div>
         <div className="mt-3 space-y-2">
           {workspaces.map((w) => (
             <div key={w.id} className="flex items-center justify-between px-3 py-2 rounded-xl bg-muted/40">
@@ -58,7 +58,7 @@ export default function Settings() {
           ))}
         </div>
         <form onSubmit={createWs} className="mt-4 flex gap-2" data-testid="new-workspace-form">
-          <Input value={wsName} onChange={(e) => setWsName(e.target.value)} placeholder="New workspace name" />
+          <Input value={wsName} onChange={(e) => setWsName(e.target.value)} placeholder="New brand workspace name" />
           <Button type="submit" disabled={loading} data-testid="new-workspace-submit">
             {loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />} Create
           </Button>

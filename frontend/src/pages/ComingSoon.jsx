@@ -14,7 +14,7 @@ export default function ComingSoon({ title, codename, description }) {
           <div className="w-14 h-14 mx-auto rounded-xl bg-muted grid place-items-center mb-4"><Construction className="w-5 h-5 text-amber-500" /></div>
           <h3 className="font-display text-xl font-semibold">In the pipeline</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-md mx-auto">
-            This module is on the cdxi OS roadmap. Ask Atlas about early access or priorities to ship first.
+            This module is on the cdxi OS internal roadmap. Ask Atlas about priority, or pin it for the next sprint.
           </p>
         </div>
       </Card>

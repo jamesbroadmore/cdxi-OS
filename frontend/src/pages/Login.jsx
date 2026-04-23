@@ -7,8 +7,8 @@ import { Loader2, Sparkles, ArrowRight } from "lucide-react";
 
 export default function Login() {
   const { user, login } = useAuth();
-  const [email, setEmail] = useState("admin@cdxi.os");
-  const [password, setPassword] = useState("admin123");
+  const [email, setEmail] = useState("parker@cdxi.au");
+  const [password, setPassword] = useState("220191");
   const [loading, setLoading] = useState(false);
   const [err, setErr] = useState("");
   const nav = useNavigate();
@@ -99,7 +99,7 @@ export default function Login() {
           </div>
 
           <div className="mt-6 rounded-xl border border-border bg-muted/40 p-3 text-xs font-mono text-muted-foreground">
-            demo · admin@cdxi.os / admin123
+            demo · parker@cdxi.au / 220191
           </div>
         </motion.form>
       </div>

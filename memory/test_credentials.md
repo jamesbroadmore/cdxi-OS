@@ -1,10 +1,10 @@
 # cdxi OS — Test Credentials
 
-## Admin account (pre-seeded on server startup)
-- **Email**: `admin@cdxi.os`
-- **Password**: `admin123`
+## Admin account (pre-seeded on server startup, password rotated if .env changes)
+- **Email**: `parker@cdxi.au`
+- **Password**: `220191`
 - **Role**: `admin`
-- **Workspace**: "HQ Workspace" (auto-created, seeded with demo clients/deals/projects/proposals)
+- **Workspace**: "HQ Workspace" (auto-created on first boot, seeded with demo clients/deals/projects/proposals)
 
 ## Auth endpoints
 - `POST /api/auth/register` — { email, password, name, organization_name? }
@@ -16,8 +16,8 @@
 ## Multi-tenant
 - `GET /api/workspaces` — list workspaces for current user
 - `POST /api/workspaces` — create workspace
-- All other `/api/*` endpoints require `X-Workspace-Id` header (auto-added by frontend interceptor).
+- All resource endpoints require `X-Workspace-Id` header (auto-added by frontend interceptor).
 
 ## Client Portal (unauthenticated)
-- `POST /api/clients/{id}/share` — issues a `share_token` (authed)
+- `POST /api/clients/{id}/share` — issues `share_token` (authed)
 - `GET /api/portal/{share_token}` — public read-only view

@@ -818,7 +818,7 @@ async def startup():
     await db.tasks.create_index("workspace_id")
     await db.proposals.create_index("workspace_id")
     await db.clients.create_index("share_token")
-    # admin seed
+    # admin seed (idempotent — rotates password if .env changes)
     admin_email = os.environ.get("ADMIN_EMAIL", "admin@cdxi.os")
     admin_password = os.environ.get("ADMIN_PASSWORD", "admin123")
     existing = await db.users.find_one({"email": admin_email})
@@ -842,6 +842,11 @@ async def startup():
             "workspace_id": ws_id, "role": "owner", "created_at": now(),
         })
         await seed_demo(ws_id)
+    elif not verify_password(admin_password, existing["password_hash"]):
+        await db.users.update_one(
+            {"email": admin_email},
+            {"$set": {"password_hash": hash_password(admin_password)}},
+        )
 
 
 @api.get("/health")

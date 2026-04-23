@@ -1,0 +1,8 @@
+{
+  "short_name": "cdxi OS",
+  "name": "cdxi OS — Operate the Venture",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#09090b",
+  "theme_color": "#09090b"
+}

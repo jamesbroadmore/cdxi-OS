@@ -3,12 +3,26 @@ import { motion } from "framer-motion";
 import { Bot, Sparkles, Zap } from "lucide-react";
 import api from "../lib/api";
 import { Card, Badge, Button } from "../components/ui/Primitives";
+import { useCopilot } from "../context/CopilotContext";
 
 const CAT_TONE = { Growth: "success", Delivery: "info", Operations: "warning" };
 
 export default function Agents() {
   const [agents, setAgents] = useState([]);
+  const { openWith } = useCopilot();
   useEffect(() => { api.get("/agents").then(({ data }) => setAgents(data)); }, []);
+
+  const deploy = (a) => {
+    const prompts = {
+      "growth-lead-gen": "Act as a Lead Gen Strategist for cdxi. Map an ideal-customer profile and 5 sources to mine for the next 20 qualified leads.",
+      "growth-sales-outreach": "Act as our Sales Outreach Agent. Draft a 3-step cold email sequence for a cdxi prospect, varying angle and CTA.",
+      "delivery-content": "Act as our Content Writer. Draft an SEO brief + 300-word intro for a post on 'internal operating systems for modern studios'.",
+      "delivery-proposal": "Act as our Proposal Drafter. Draft a scope + pricing for a growth retainer based on our current pipeline signals.",
+      "ops-admin": "Act as our Admin Assistant. Triage this week's priorities from the workspace and propose a schedule.",
+      "ops-finance": "Act as our Finance Analyst. Summarise deal economics and flag margin risk across current projects.",
+    };
+    openWith(prompts[a.id] || `Act as ${a.name}. ${a.description}`);
+  };
 
   const grouped = agents.reduce((m, a) => { (m[a.category] ||= []).push(a); return m; }, {});
 
@@ -51,8 +65,8 @@ export default function Agents() {
                     ))}
                   </div>
                   <div className="mt-4 flex items-center gap-2">
-                    <Button size="sm" variant="outline" data-testid={`agent-deploy-${a.id}`}><Zap className="w-3 h-3" /> Deploy</Button>
-                    <Button size="sm" variant="ghost"><Sparkles className="w-3 h-3" /> Configure</Button>
+                    <Button size="sm" variant="outline" onClick={() => deploy(a)} data-testid={`agent-deploy-${a.id}`}><Zap className="w-3 h-3" /> Deploy</Button>
+                    <Button size="sm" variant="ghost" onClick={() => deploy(a)}><Sparkles className="w-3 h-3" /> Configure</Button>
                   </div>
                 </Card>
               </motion.div>

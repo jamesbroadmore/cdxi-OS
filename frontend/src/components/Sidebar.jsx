@@ -2,13 +2,14 @@ import React from "react";
 import { NavLink } from "react-router-dom";
 import {
   LayoutDashboard, Users, Briefcase, FileText, Bot, Workflow,
-  BookOpen, Coins, Rocket, Settings, ChevronsLeft, ChevronsRight,
+  BookOpen, Coins, Rocket, Settings, ChevronsLeft, ChevronsRight, GitBranch,
 } from "lucide-react";
 import { cn } from "../lib/utils";
 
 const NAV = [
   { to: "/", icon: LayoutDashboard, label: "Home", codename: "Atlas" },
-  { to: "/crm", icon: Users, label: "Clients", codename: "Pulse" },
+  { to: "/crm", icon: GitBranch, label: "Pipeline", codename: "Pulse" },
+  { to: "/clients", icon: Users, label: "Clients", codename: "Pulse" },
   { to: "/projects", icon: Briefcase, label: "Projects", codename: "Orbit" },
   { to: "/proposals", icon: FileText, label: "Proposals", codename: "Vault" },
   { to: "/agents", icon: Bot, label: "Agents", codename: "Helix" },

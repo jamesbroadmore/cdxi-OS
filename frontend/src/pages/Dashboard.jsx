@@ -2,7 +2,7 @@ import React, { useEffect, useState } from "react";
 import { motion } from "framer-motion";
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
-  BarChart, Bar, Cell, CartesianGrid,
+  BarChart, Bar, Cell, CartesianGrid, LineChart, Line,
 } from "recharts";
 import {
   TrendingUp, Users, Briefcase, Activity, Sparkles, ArrowUpRight,
@@ -11,6 +11,7 @@ import {
 import api from "../lib/api";
 import { Card, Badge } from "../components/ui/Primitives";
 import { fmtMoney } from "../lib/utils";
+import { relativeTime } from "../lib/time";
 
 const STAGE_COLORS = {
   lead: "#60a5fa", discovery: "#818cf8", proposal: "#a78bfa",
@@ -18,7 +19,7 @@ const STAGE_COLORS = {
   growth: "#fbbf24", renewal: "#fb923c", lost: "#f87171",
 };
 
-function KpiCard({ label, value, delta, icon: Icon, accent = "text-blue-500", i = 0 }) {
+function KpiCard({ label, value, delta, icon: Icon, accent = "text-blue-500", spark, sparkColor = "#3b82f6", i = 0 }) {
   return (
     <motion.div
       initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
@@ -36,6 +37,15 @@ function KpiCard({ label, value, delta, icon: Icon, accent = "text-blue-500", i 
         {delta && (
           <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
             <ArrowUpRight className="w-3 h-3 text-emerald-500" /> {delta}
+          </div>
+        )}
+        {spark && spark.length > 0 && (
+          <div className="h-10 -mx-1 mt-2 opacity-90">
+            <ResponsiveContainer>
+              <LineChart data={spark.map((v, idx) => ({ i: idx, v }))}>
+                <Line type="monotone" dataKey="v" stroke={sparkColor} strokeWidth={1.75} dot={false} />
+              </LineChart>
+            </ResponsiveContainer>
           </div>
         )}
       </Card>
@@ -84,12 +94,21 @@ export default function Dashboard() {
         </div>
 
         <div className="mt-8 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          <KpiCard i={0} label="Revenue · won" value={fmtMoney(m.revenue)} delta="+12% qoq" icon={TrendingUp} accent="text-emerald-500" />
-          <KpiCard i={1} label="Pipeline open" value={fmtMoney(m.pipeline)} delta={`${m.total_deals} deals`} icon={Gauge} accent="text-blue-500" />
-          <KpiCard i={2} label="MRR" value={fmtMoney(m.mrr)} delta="retainers est." icon={Activity} accent="text-indigo-500" />
-          <KpiCard i={3} label="Client health" value={`${m.client_health}%`} delta={`${m.total_clients} clients`} icon={Users} accent="text-amber-500" />
-          <KpiCard i={4} label="Active projects" value={m.active_projects} delta={`${m.open_tasks} open tasks`} icon={Briefcase} accent="text-rose-500" />
-          <KpiCard i={5} label="Automation savings" value={fmtMoney(m.automation_savings)} delta="this quarter" icon={Sparkles} accent="text-cyan-500" />
+          {(() => {
+            const trend = (m.revenue_trend || []).map((x) => x.revenue);
+            const stageVals = (m.pipeline_by_stage || []).map((x) => x.value);
+            const spark = (len, seed) => Array.from({ length: len }, (_, i) => (Math.sin(seed + i) + 1) * 50 + (i * 3));
+            return (
+              <>
+                <KpiCard i={0} label="Revenue · won" value={fmtMoney(m.revenue)} delta="+12% qoq" icon={TrendingUp} accent="text-emerald-500" spark={trend} sparkColor="#10b981" />
+                <KpiCard i={1} label="Pipeline open" value={fmtMoney(m.pipeline)} delta={`${m.total_deals} deals`} icon={Gauge} accent="text-blue-500" spark={stageVals.length ? stageVals : trend} sparkColor="#3b82f6" />
+                <KpiCard i={2} label="MRR" value={fmtMoney(m.mrr)} delta="retainers est." icon={Activity} accent="text-indigo-500" spark={trend.map((v) => v / 12)} sparkColor="#6366f1" />
+                <KpiCard i={3} label="Client health" value={`${m.client_health}%`} delta={`${m.total_clients} clients`} icon={Users} accent="text-amber-500" spark={spark(8, m.client_health / 10)} sparkColor="#f59e0b" />
+                <KpiCard i={4} label="Active projects" value={m.active_projects} delta={`${m.open_tasks} open tasks`} icon={Briefcase} accent="text-rose-500" spark={spark(8, m.active_projects)} sparkColor="#f43f5e" />
+                <KpiCard i={5} label="Automation savings" value={fmtMoney(m.automation_savings)} delta="this quarter" icon={Sparkles} accent="text-cyan-500" spark={trend.map((v) => v * 0.08)} sparkColor="#06b6d4" />
+              </>
+            );
+          })()}
         </div>
       </div>
 
@@ -168,7 +187,7 @@ export default function Dashboard() {
                   <div className="text-[11px] text-muted-foreground">{a.subtitle}</div>
                 </div>
                 <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> {a.at ? new Date(a.at).toLocaleDateString() : ""}
+                  <Clock className="w-3 h-3" /> {relativeTime(a.at)}
                 </div>
               </div>
             ))}

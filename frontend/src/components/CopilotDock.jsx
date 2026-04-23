@@ -5,7 +5,7 @@ import ReactMarkdown from "react-markdown";
 import api from "../lib/api";
 import { Button } from "./ui/Primitives";
 
-export default function CopilotDock({ open, onClose }) {
+export default function CopilotDock({ open, onClose, seedPrompt }) {
   const [messages, setMessages] = useState([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
@@ -15,6 +15,13 @@ export default function CopilotDock({ open, onClose }) {
   useEffect(() => {
     if (scroller.current) scroller.current.scrollTop = scroller.current.scrollHeight;
   }, [messages, loading]);
+
+  // When a seed prompt is passed (e.g. from Agents page), prefill the input on open
+  useEffect(() => {
+    if (open && seedPrompt) {
+      setInput(seedPrompt);
+    }
+  }, [open, seedPrompt]);
 
   const send = async () => {
     if (!input.trim() || loading) return;

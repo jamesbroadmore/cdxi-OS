@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from "./context/AuthContext";
+import { CopilotProvider, useCopilot } from "./context/CopilotContext";
 
 import Login from "./pages/Login";
 import Register from "./pages/Register";
@@ -25,8 +26,8 @@ import { Loader2 } from "lucide-react";
 
 function AppShell() {
   const { user, loadWorkspaces } = useAuth();
+  const { open: copilot, setOpen: setCopilot, seedPrompt } = useCopilot();
   const [collapsed, setCollapsed] = useState(false);
-  const [copilot, setCopilot] = useState(false);
   const [palette, setPalette] = useState(false);
   const [wsModal, setWsModal] = useState(false);
   const [wsName, setWsName] = useState("");
@@ -45,7 +46,7 @@ function AppShell() {
     };
     window.addEventListener("keydown", h);
     return () => window.removeEventListener("keydown", h);
-  }, []);
+  }, [setCopilot]);
 
   const createWs = async (e) => {
     e.preventDefault();
@@ -93,7 +94,7 @@ function AppShell() {
       </div>
 
       <CommandPalette open={palette} onClose={() => setPalette(false)} onOpenCopilot={() => setCopilot(true)} />
-      <CopilotDock open={copilot} onClose={() => setCopilot(false)} />
+      <CopilotDock open={copilot} onClose={() => setCopilot(false)} seedPrompt={seedPrompt} />
 
       <Modal open={wsModal} onClose={() => setWsModal(false)} title="New brand workspace">
         <form onSubmit={createWs} className="space-y-4">
@@ -112,12 +113,14 @@ export default function App() {
   return (
     <BrowserRouter>
       <AuthProvider>
-        <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route path="/register" element={<Register />} />
-          <Route path="/portal/:token" element={<ClientPortal />} />
-          <Route path="*" element={<AppShell />} />
-        </Routes>
+        <CopilotProvider>
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/portal/:token" element={<ClientPortal />} />
+            <Route path="*" element={<AppShell />} />
+          </Routes>
+        </CopilotProvider>
       </AuthProvider>
     </BrowserRouter>
   );

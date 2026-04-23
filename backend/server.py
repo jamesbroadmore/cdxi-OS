@@ -197,6 +197,7 @@ class CopilotMessage(BaseModel):
     session_id: str
     message: str
     context: Optional[str] = None
+    include_workspace: bool = True
 
 
 # -------------- app --------------
@@ -341,6 +342,15 @@ async def create_workspace(data: WorkspaceIn, user: dict = Depends(get_current_u
     })
     ws = await db.workspaces.find_one({"id": wid}, {"_id": 0})
     return ws
+
+
+@api.put("/workspaces/{wid}")
+async def update_workspace(wid: str, data: WorkspaceIn, user: dict = Depends(get_current_user)):
+    mem = await db.memberships.find_one({"user_id": user["id"], "workspace_id": wid})
+    if not mem:
+        raise HTTPException(403, "No access")
+    await db.workspaces.update_one({"id": wid}, {"$set": data.dict()})
+    return await db.workspaces.find_one({"id": wid}, {"_id": 0})
 
 
 # ==========================================================
@@ -686,8 +696,52 @@ async def agents():
 # ==========================================================
 # AI COPILOT
 # ==========================================================
+async def build_workspace_context(request: Request, user: dict) -> str:
+    """Build a compact snapshot of the active workspace for Atlas."""
+    try:
+        ws = await require_workspace(request, user)
+    except Exception:
+        return ""
+    wid = ws["id"]
+    clients = await db.clients.find({"workspace_id": wid}, {"_id": 0}).to_list(200)
+    deals = await db.deals.find({"workspace_id": wid}, {"_id": 0}).to_list(500)
+    projects = await db.projects.find({"workspace_id": wid}, {"_id": 0}).to_list(200)
+    proposals = await db.proposals.find({"workspace_id": wid}, {"_id": 0}).to_list(200)
+
+    pipeline_value = sum((d.get("value") or 0) for d in deals if d.get("stage") not in ("won", "lost"))
+    won_value = sum((d.get("value") or 0) for d in deals if d.get("stage") == "won")
+
+    def brief_client(c):
+        return f"- {c['name']} ({c.get('company','')}) · status={c.get('status')} · health={c.get('health_score')}"
+    def brief_deal(d):
+        return f"- {d['title']} · {d.get('client_name','')} · stage={d.get('stage')} · value=${d.get('value',0):,.0f} · p={d.get('probability',0)}%"
+    def brief_project(p):
+        return f"- {p['name']} · {p.get('client_name','')} · status={p.get('status')} · progress={p.get('progress',0)}% · budget=${p.get('budget',0):,.0f}"
+    def brief_proposal(p):
+        return f"- {p['title']} · {p.get('client_name','')} · status={p.get('status')} · total=${p.get('total',0):,.0f}"
+
+    lines = [
+        f"BRAND WORKSPACE: {ws['name']}",
+        f"Pipeline open value: ${pipeline_value:,.0f} · Won revenue: ${won_value:,.0f}",
+        f"Counts: clients={len(clients)} deals={len(deals)} projects={len(projects)} proposals={len(proposals)}",
+        "",
+        "CLIENTS:",
+        *[brief_client(c) for c in clients[:15]],
+        "",
+        "DEALS:",
+        *[brief_deal(d) for d in deals[:20]],
+        "",
+        "PROJECTS:",
+        *[brief_project(p) for p in projects[:10]],
+        "",
+        "PROPOSALS:",
+        *[brief_proposal(p) for p in proposals[:10]],
+    ]
+    return "\n".join(lines)
+
+
 @api.post("/copilot/chat")
-async def copilot_chat(data: CopilotMessage, user: dict = Depends(get_current_user)):
+async def copilot_chat(data: CopilotMessage, request: Request, user: dict = Depends(get_current_user)):
     if not EMERGENT_LLM_KEY:
         raise HTTPException(500, "LLM key not configured")
 
@@ -701,10 +755,20 @@ async def copilot_chat(data: CopilotMessage, user: dict = Depends(get_current_us
         "Your users are cdxi operators, founders and delivery team. "
         "Help them run the business: CRM, deals, brand workspaces, projects, proposals, delivery ops, and knowledge. "
         "Be concise, strategic and action-oriented. Use short paragraphs and bullets. "
-        "When asked, draft proposals, outreach, SOPs, summaries and plans. Always respond in markdown."
+        "When asked, draft proposals, outreach, SOPs, summaries and plans. Always respond in markdown. "
+        "Only use the workspace data below when the question calls for it — don't dump it back verbatim."
     )
+
+    # attach live workspace snapshot unless caller explicitly opted out
+    if data.include_workspace:
+        try:
+            snapshot = await build_workspace_context(request, user)
+            if snapshot:
+                system += f"\n\n--- LIVE WORKSPACE SNAPSHOT ---\n{snapshot}\n--- END SNAPSHOT ---"
+        except Exception:
+            pass
     if data.context:
-        system += f"\n\nWorkspace context:\n{data.context}"
+        system += f"\n\nAdditional context:\n{data.context}"
 
     chat = LlmChat(
         api_key=EMERGENT_LLM_KEY,

@@ -43,6 +43,9 @@ export function AuthProvider({ children }) {
   }, [loadWorkspaces]);
 
   const login = async (email, password) => {
+    // clear any stale storage before fresh login
+    localStorage.removeItem("cdxi_token");
+    localStorage.removeItem("cdxi_workspace_id");
     const { data } = await api.post("/auth/login", { email, password });
     if (data.access_token) localStorage.setItem("cdxi_token", data.access_token);
     setUser(data.user);

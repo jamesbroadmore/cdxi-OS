@@ -204,19 +204,27 @@ class CopilotMessage(BaseModel):
 app = FastAPI(title="cdxi OS")
 
 origins_env = os.environ.get("CORS_ORIGINS", "*")
+# When allow_credentials=True, browsers reject wildcard origins.
+# So use allow_origin_regex for wildcard and never allow credentials with "*".
 if origins_env == "*":
-    allow_origins = ["*"]
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origin_regex=".*",
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 else:
     allow_origins = [o.strip() for o in origins_env.split(",") if o.strip()]
-
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=allow_origins,
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-    expose_headers=["*"],
-)
+    app.add_middleware(
+        CORSMiddleware,
+        allow_origins=allow_origins,
+        allow_credentials=True,
+        allow_methods=["*"],
+        allow_headers=["*"],
+        expose_headers=["*"],
+    )
 
 api = APIRouter(prefix="/api")
 

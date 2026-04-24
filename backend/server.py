@@ -285,8 +285,8 @@ async def register(data: RegisterIn, response: Response):
         "workspace_id": ws_id, "role": "owner", "created_at": now(),
     })
 
-    # seed a little demo data so first screen isn't empty
-    await seed_demo(ws_id)
+    # no demo data — fresh workspaces are empty
+    # await seed_demo(ws_id)
 
     access = create_access_token(user_id, email)
     refresh = create_refresh_token(user_id)
@@ -898,7 +898,6 @@ async def startup():
     if not existing:
         user_id = new_id()
         org_id = new_id()
-        ws_id = new_id()
         await db.users.insert_one({
             "id": user_id, "email": admin_email, "password_hash": hash_password(admin_password),
             "name": "cdxi Admin", "role": "admin", "avatar_url": "", "created_at": now(),
@@ -906,15 +905,22 @@ async def startup():
         await db.organizations.insert_one({
             "id": org_id, "name": "cdxi", "owner_id": user_id, "created_at": now(),
         })
-        await db.workspaces.insert_one({
-            "id": ws_id, "org_id": org_id, "name": "cdxi · Core",
-            "description": "Core brand workspace", "owner_id": user_id, "created_at": now(),
-        })
-        await db.memberships.insert_one({
-            "id": new_id(), "user_id": user_id, "org_id": org_id,
-            "workspace_id": ws_id, "role": "owner", "created_at": now(),
-        })
-        await seed_demo(ws_id)
+        # cdxi + associated brand workspaces — all empty by design
+        brands = [
+            ("cdxi",      "cdxi · core brand"),
+            ("fourtee2",  "cdxi brand · fourtee2"),
+            ("fleshsesh", "cdxi brand · fleshsesh"),
+        ]
+        for bname, bdesc in brands:
+            ws_id = new_id()
+            await db.workspaces.insert_one({
+                "id": ws_id, "org_id": org_id, "name": bname,
+                "description": bdesc, "owner_id": user_id, "created_at": now(),
+            })
+            await db.memberships.insert_one({
+                "id": new_id(), "user_id": user_id, "org_id": org_id,
+                "workspace_id": ws_id, "role": "owner", "created_at": now(),
+            })
     elif not verify_password(admin_password, existing["password_hash"]):
         await db.users.update_one(
             {"email": admin_email},

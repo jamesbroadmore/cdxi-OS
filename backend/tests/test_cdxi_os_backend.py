@@ -82,6 +82,24 @@ class TestAuth:
                           timeout=15)
         assert r.status_code == 401
 
+    def test_brute_force_lockout(self):
+        """5 bad attempts on a non-existent email -> 6th returns 429."""
+        # Use a unique random email so we don't pollute other tests / lock parker
+        lockout_email = f"lockout-test-{uuid.uuid4().hex[:8]}@example.com"
+        for i in range(5):
+            r = requests.post(f"{API}/auth/login",
+                              json={"email": lockout_email, "password": "wrong"},
+                              timeout=15)
+            assert r.status_code == 401, f"attempt {i+1}: expected 401 got {r.status_code} {r.text}"
+        # 6th attempt -> locked
+        r6 = requests.post(f"{API}/auth/login",
+                           json={"email": lockout_email, "password": "wrong"},
+                           timeout=15)
+        assert r6.status_code == 429, f"expected 429 lockout got {r6.status_code} {r6.text}"
+        body = r6.json()
+        detail = (body.get("detail") or body.get("message") or str(body)).lower()
+        assert "try again" in detail or "minute" in detail, f"lockout message missing: {body}"
+
     def test_me_matches_login(self, headers):
         r = requests.get(f"{API}/auth/me", headers=headers, timeout=15)
         assert r.status_code == 200

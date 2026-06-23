@@ -1,0 +1,44 @@
+{
+  "summary": "Beta-readiness sweep for cdxi | OS — both backend and frontend tested end-to-end against the external preview URL. Backend pytest: 25/25 PASS including the newly added brute-force lockout (5 fails on a random non-existent email -> 6th returns 429 with 'Try again in ~X minute(s)') and a live GPT-5.2 round-trip via /api/copilot/chat. Frontend: login (parker@cdxi.au / 220191) succeeds + redirects to /, all 7 nav routes (/, /clients, /projects, /billing, /contracts, /agents, /settings) load with zero page errors and zero console errors. Sidebar shows OPERATE/MONEY/INTELLIGENCE/SYSTEM section labels (lowercase in DOM, rendered uppercase via CSS). Atlas dock (data-testid=open-copilot) opens, message sent, real GPT-5.2 reply rendered ('Our three brands are cdxi, fourtee2, and fleshsesh.'). Cmd+K palette (data-testid=open-palette) opens, typed search shows results, ESC closes it. Theme toggle flips document.documentElement[data-theme] dark<->light and updates localStorage('theme') + body bg color (rgb(10,11,20) <-> rgb(245,246,250)); layout intact. Sidebar collapse chevron shrinks aside from 240px -> 68px and back. NewClientDialog created a client which immediately appeared (Total Clients 0 -> 1). Sign-out icon in sidebar footer logs out and returns to /login.",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/auth/login", "issue": "Brute-force lockout is in-memory only — process restart resets counters (acceptable trade-off, but document it)."},
+      {"endpoint": "/api/audit-log", "issue": "Field is `event_name` (not `action`); ensure any future public docs/UI match."},
+      {"endpoint": "PATCH /api/milestones/{id}", "issue": "Hard 400 if completed=true is sent before payment_status='paid'; surface this rule in API docs/UI."}
+    ]
+  },
+  "frontend_issues": {
+    "ui_bugs": [],
+    "integration_issues": [],
+    "design_issues": [
+      {"screen": "Sidebar (light theme)", "issues": ["After switching to light mode the sidebar section labels (OPERATE/MONEY/INTELLIGENCE/SYSTEM) and inactive nav items appear very low-contrast against the near-white background. Consider darkening label color tokens for the light variant."]},
+      {"screen": "Sidebar active indicator", "issues": ["Active nav item uses a faint indigo background tint (bg-indigo-500/10). Spec language ('indigo left accent') suggests an explicit left bar — if intended, add a `border-l-2 border-indigo-500` (or ::before bar) for stronger visual affordance."]}
+    ]
+  },
+  "test_report_links": [
+    "/app/backend/tests/test_cdxi_os_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional polish) Improve sidebar light-mode contrast for section labels and inactive nav items.",
+    "(Optional polish) Add an explicit indigo left accent bar on the active sidebar item to match spec wording.",
+    "(Optional doc) Note that brute-force lockout state resets on backend restart."
+  ],
+  "critical_code_review_comments": [
+    "server.py remains ~2700 lines — recommend splitting into routers/ modules (auth, copilot, clients, projects, milestones, contracts, invoices, tenants, agents, seed).",
+    "Brute-force lockout is in-memory dict; for multi-replica deployments move to Redis/Mongo TTL collection.",
+    "/api/copilot/chat now has 45s timeout — good. No per-user rate limit; consider one to cap LLM spend.",
+    "CORS_ORIGINS='*' with allow_credentials=True still present; harmless here (Bearer-token auth, no cookies) but should be tightened before any cookie-based session usage."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cdxi_os_backend.py"
+  ],
+  "success_rate": {"backend": "100% (25/25)", "frontend": "100% functional (all 14 scenarios verified); 2 minor design polish items"},
+  "test_credentials": "parker@cdxi.au / 220191 (admin, tenant_id=default) — verified working. Brute-force test uses random lockout-test-<uuid>@example.com so parker is never locked.",
+  "seed_data_creation": "Backend pytest creates and tears down a TEST_-prefixed client+project chain. Frontend UI test created one 'UI Test Client <ts>' that remains in the default tenant clients list (visible to user; safe to delete).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Test file /app/backend/tests/test_cdxi_os_backend.py is the single source of truth for backend regression — now includes brute-force lockout case. Lockout is in-memory, so if you accidentally trigger it on parker run `sudo supervisorctl restart backend`. For UI: data-testid hooks confirmed working: open-copilot, open-palette, tenant-switcher-btn. Other useful selectors: button[title='Sign out'] (sidebar footer logout), button[title='Collapse sidebar']/'Expand sidebar', button[title*='mode'] (theme toggle). Theme persistence uses document.documentElement[data-theme] + localStorage('theme'). Frontend stores JWT in localStorage as `access_token`.",
+  "rca of the issue": "N/A — all features green. Two design polish items are subjective and not blockers for beta launch."
+}

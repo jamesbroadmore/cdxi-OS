@@ -406,6 +406,30 @@ button.bg-indigo-600 {
 [data-theme="dark"] [data-cdxi-logo] { color: #ffffff; }
 
 /* ============================================================
+   Sidebar contrast — light theme adjustments
+   ============================================================ */
+[data-theme="light"] aside.cdxi-sidebar,
+[data-theme="light"] header.cdxi-topbar {
+    background-color: #f7f7f9 !important;
+    border-color: #e4e4e7 !important;
+}
+[data-theme="light"] aside.cdxi-sidebar .cdxi-nav-section {
+    color: #71717a;
+}
+[data-theme="light"] aside.cdxi-sidebar nav a {
+    color: #3f3f46;
+}
+[data-theme="light"] aside.cdxi-sidebar nav a:hover {
+    background-color: #e4e4e7 !important;
+    color: #0a0a0a !important;
+}
+[data-theme="light"] aside.cdxi-sidebar nav a.active,
+[data-theme="light"] aside.cdxi-sidebar nav a[aria-current="page"] {
+    background-color: rgba(99,102,241,0.10) !important;
+    color: #1e1b4b !important;
+}
+
+/* ============================================================
    Live dot — breathing
    ============================================================ */
 .bg-emerald-400 { animation: cdxi-pulse 2.4s ease-in-out infinite; }

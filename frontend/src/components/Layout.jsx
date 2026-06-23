@@ -206,7 +206,7 @@ export default function Layout({ children }) {
 
       {/* ── Sidebar ─────────────────────────────────────── */}
       <aside
-        className={`
+        className={`cdxi-sidebar
           fixed inset-y-0 left-0 z-40 flex flex-col border-r border-zinc-800 bg-[#0b0b0f] shadow-xl shadow-black/30
           transition-all duration-200 ease-in-out
           ${collapsed ? "w-[68px]" : "w-60"}
@@ -223,7 +223,7 @@ export default function Layout({ children }) {
           {navSections.map((section, sIdx) => (
             <div key={section.label}>
               {!collapsed && (
-                <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-600">
+                <div className="px-3 mb-1.5 text-[10px] font-semibold uppercase tracking-[0.16em] text-zinc-500 cdxi-nav-section">
                   {section.label}
                 </div>
               )}
@@ -241,15 +241,15 @@ export default function Layout({ children }) {
                       `group relative flex items-center rounded-lg text-sm transition-colors
                        ${collapsed ? "h-10 w-10 mx-auto justify-center" : "h-9 px-3 gap-3"}
                        ${isActive
-                         ? "bg-indigo-500/10 text-white font-medium"
-                         : "text-zinc-400 hover:bg-zinc-900 hover:text-zinc-100"}`
+                         ? "bg-indigo-500/12 text-white font-medium"
+                         : "text-zinc-400 hover:bg-zinc-800/60 hover:text-zinc-100"}`
                     }
                     title={collapsed ? label : undefined}
                   >
                     {({ isActive }) => (
                       <>
-                        {isActive && !collapsed && (
-                          <span className="absolute left-0 top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-indigo-400" />
+                        {isActive && (
+                          <span className={`absolute top-1.5 bottom-1.5 w-[3px] rounded-r-full bg-indigo-400 ${collapsed ? "left-0" : "left-0"}`} />
                         )}
                         <Icon
                           size={16}
@@ -320,7 +320,7 @@ export default function Layout({ children }) {
       {/* ── Main ────────────────────────────────────────── */}
       <div className={`flex flex-col flex-1 overflow-hidden transition-all duration-200 ${collapsed ? "lg:pl-[68px]" : "lg:pl-60"}`}>
         {/* Top bar */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-zinc-800 bg-[#0b0b0f] px-4 lg:px-6">
+        <header className="cdxi-topbar sticky top-0 z-20 flex h-14 items-center justify-between border-b border-zinc-800 bg-[#0b0b0f] px-4 lg:px-6">
           <button
             onClick={() => setMobileOpen((o) => !o)}
             className="lg:hidden text-zinc-400 hover:text-white"

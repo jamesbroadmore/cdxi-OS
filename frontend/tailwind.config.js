@@ -7,7 +7,13 @@ module.exports = {
   ],
   theme: {
   	extend: {
-  		borderRadius: {
+  		
+                fontFamily: {
+                        sans: ['Inter', 'system-ui', '-apple-system', 'BlinkMacSystemFont', '"Segoe UI"', 'sans-serif'],
+                        righteous: ['Righteous', 'system-ui', 'sans-serif'],
+                        mono: ['"JetBrains Mono"', 'ui-monospace', 'Menlo', 'monospace'],
+                },
+borderRadius: {
   			lg: 'var(--radius)',
   			md: 'calc(var(--radius) - 2px)',
   			sm: 'calc(var(--radius) - 4px)'

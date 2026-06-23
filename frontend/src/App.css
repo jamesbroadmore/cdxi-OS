@@ -397,21 +397,13 @@ button.bg-indigo-600 {
 }
 
 /* ============================================================
-   Logo — gradient + glow per theme
+   Logo — text-led, simple, confident
    ============================================================ */
 [data-cdxi-logo] {
-    background: var(--logo-grad) !important;
-    -webkit-background-clip: text !important;
-    background-clip: text !important;
-    -webkit-text-fill-color: transparent !important;
-    filter: var(--logo-glow);
-    animation: cdxi-logo-pulse 6s ease-in-out infinite alternate;
+    color: var(--logo-color, currentColor);
 }
-@keyframes cdxi-logo-pulse {
-    0%   { filter: var(--logo-glow); }
-    100% { filter: var(--logo-glow) brightness(1.1); }
-}
-[data-theme="light"] [data-cdxi-logo] { animation: none; }
+[data-theme="light"] [data-cdxi-logo] { color: #0a0a0a; }
+[data-theme="dark"] [data-cdxi-logo] { color: #ffffff; }
 
 /* ============================================================
    Live dot — breathing

@@ -22,45 +22,23 @@ const navItems = [
   { icon: Settings,        label: "Settings",  href: "/settings" },
 ];
 
-/* ─── Iconic cdxi wordmark ─────────────────────────────── */
+/* ─── Iconic cdxi wordmark — text-led, no chrome ─────────── */
 function CdxiLogo({ collapsed }) {
+  if (collapsed) {
+    return (
+      <span
+        data-cdxi-logo
+        className="font-righteous text-[22px] leading-none tracking-tight select-none"
+        style={{ fontFamily: "'Righteous', system-ui, sans-serif" }}
+      >c</span>
+    );
+  }
   return (
-    <div className={`flex items-center gap-2.5 select-none ${collapsed ? "justify-center" : ""}`}>
-      {collapsed ? (
-        /* Collapsed: "cd" pill */
-        <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-600 to-violet-600 shadow-lg shadow-indigo-900/40">
-          <span
-            className="font-righteous text-sm text-white leading-none tracking-tight"
-            style={{ fontFamily: "'Righteous', cursive" }}
-          >
-            cd
-          </span>
-        </div>
-      ) : (
-        <div className="flex items-baseline gap-0">
-          {/* Main wordmark */}
-          <span
-            data-cdxi-logo
-            className="text-[26px] leading-none tracking-tight"
-            style={{
-              fontFamily: "'Righteous', cursive",
-              background: "linear-gradient(135deg, #ffffff 0%, #a5b4fc 55%, #818cf8 100%)",
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            cdxi
-          </span>
-          {/* OS badge */}
-          <span
-            className="ml-1.5 mb-0.5 rounded-sm bg-indigo-500/15 border border-indigo-500/25 px-1 py-px text-[8px] font-mono text-indigo-400 leading-none uppercase tracking-widest self-end"
-          >
-            OS
-          </span>
-        </div>
-      )}
-    </div>
+    <span
+      data-cdxi-logo
+      className="font-righteous text-[28px] leading-none tracking-tight select-none"
+      style={{ fontFamily: "'Righteous', system-ui, sans-serif" }}
+    >cdxi</span>
   );
 }
 

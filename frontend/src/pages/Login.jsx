@@ -38,15 +38,14 @@ export default function Login() {
       <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(99,102,241,0.06)_0%,transparent_70%)]" />
 
       <div className="relative w-full max-w-sm">
-        {/* Logo */}
-        <div className="mb-8 flex flex-col items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
-            <Zap size={22} className="text-indigo-400" />
-          </div>
-          <div className="text-center">
-            <h1 className="text-xl font-bold text-white tracking-tight">cdxi | OS</h1>
-            <p className="text-xs text-zinc-500 mt-1">Agency Operating System</p>
-          </div>
+        {/* Logo — text-led */}
+        <div className="mb-8 flex flex-col items-center gap-2">
+          <span
+            data-cdxi-logo
+            className="font-righteous leading-none tracking-tight select-none text-white"
+            style={{ fontFamily: "'Righteous', system-ui, sans-serif", fontSize: "44px" }}
+          >cdxi</span>
+          <p className="text-[10px] uppercase tracking-[0.3em] text-zinc-500">Internal · Operating System</p>
         </div>
 
         {/* Card */}

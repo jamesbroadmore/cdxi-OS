@@ -1,0 +1,44 @@
+{
+  "summary": "Backend-only regression for the merged cdxi | OS build (v2.3 portal backend + cdxi OS shell). 24/24 pytest tests pass against the external preview URL. Covered: auth login (parker@cdxi.au / 220191) returns 200+access_token with role=admin & tenant_id=default; /auth/me matches; 3 tenants seeded with default→'cdxi', fourtee2, fleshsesh; tenant isolation (X-Tenant-Id=fourtee2 → [] for clients, same for fleshsesh); /api/health returns {service:'cdxi-os', status:'ok', db:'up'}; /api/dashboard returns metrics; /api/audit-log lists recent events including auth.login (field is event_name); /api/agents returns 6 seeded agents; /api/agents/review-queue 200; full CRUD on clients/projects/milestones/tasks/change-requests/rate-cards/timers/invoices/contracts(+templates); Stripe webhook route exists and responds 4xx on empty payload; Atlas copilot POST /api/copilot/chat with EMERGENT_LLM_KEY returned a real non-empty GPT-5.2 reply (verified live LLM call, persisted into copilot_messages).",
+  "backend_issues": {
+    "critical": [],
+    "minor": [
+      {"endpoint": "/api/audit-log", "issue": "Response field is `event_name` (not `action`). Frontend/clients consuming audit-log must use event_name. Worth documenting / aliasing if a public contract is expected."},
+      {"endpoint": "PATCH /api/milestones/{id}", "issue": "Server requires payment_status='paid' BEFORE completed=true can be set (400 otherwise). This is a deliberate business rule but is undocumented — surface it in the API docs / UI."},
+      {"endpoint": "/api/copilot/chat", "issue": "Live LLM call has no server-side timeout (asyncio.wait_for) — a hung GPT-5.2 call will tie up a worker. Carried over from previous iteration."},
+      {"endpoint": "/api/auth/login", "issue": "No brute-force lockout / rate limiting on failed logins (playbook expects lockout after 5 fails)."},
+      {"endpoint": "CORS", "issue": "CORS_ORIGINS='*' with allow_credentials=True is rejected by browsers for credentialed requests. Backend works fine with Bearer-token auth (no cookies used here) so this is informational."}
+    ]
+  },
+  "frontend_issues": {"ui_bugs": [], "integration_issues": [], "design_issues": []},
+  "test_report_links": [
+    "/app/backend/tests/test_cdxi_os_backend.py",
+    "/app/test_reports/pytest/pytest_results.xml"
+  ],
+  "action_items": [
+    "(Optional) Document milestone completion rule (payment_status must be 'paid' before completed=true) in API docs / UI.",
+    "(Optional) Add asyncio.wait_for around the GPT-5.2 call in /api/copilot/chat.",
+    "(Optional) Add login rate limit / brute-force lockout per playbook.",
+    "(Optional) Tighten CORS: read explicit origins list instead of '*' when allow_credentials=True."
+  ],
+  "critical_code_review_comments": [
+    "server.py is 2706 lines — strongly recommend splitting into routers (auth.py, clients.py, projects.py, milestones.py, contracts.py, invoices.py, copilot.py, agents.py, tenants.py, seed.py) for maintainability and team velocity.",
+    "Uses deprecated @app.on_event('startup'); migrate to FastAPI lifespan context manager.",
+    "_seed_default_tenant rename-detection only updates name; it does not detect/rename slug — fine since slug='default' is intentional but could surprise readers.",
+    "log_audit stores `event_name` while the field name `action` is the more common public convention — pick one and stick to it across audit/UI/API.",
+    "Milestone update's 400 on completed-without-paid is a hard rule embedded in the route — consider returning a structured error code so the UI can guide users to mark payment first.",
+    "Copilot /chat does not enforce a per-tenant or per-user rate limit; could be abused to consume LLM credits.",
+    "No idx on copilot_messages(session_id, created_at) — fine at low volume but plan ahead.",
+    "Admin password rotation from env on every boot is good (idempotent) — verified working."
+  ],
+  "updated_files": [
+    "/app/backend/tests/test_cdxi_os_backend.py"
+  ],
+  "success_rate": {"backend": "100%", "frontend": "not_tested"},
+  "test_credentials": "parker@cdxi.au / 220191 (admin, tenant_id=default). Verified working.",
+  "seed_data_creation": "No persistent seed data created. Test resources are TEST_-prefixed and the client+project chain is deleted in fixture teardown. Two TEST_ rate cards may remain (deleted in test).",
+  "retest_needed": false,
+  "main_agent_can_self_test": true,
+  "context_for_next_testing_agent": "Backend fully green for the merged cdxi OS build. Reusable test file at /app/backend/tests/test_cdxi_os_backend.py reads REACT_APP_BACKEND_URL from env or /app/frontend/.env. Real GPT-5.2 copilot call takes ~3-10s; pytest run total ~9s. Key gotchas: audit field is `event_name` not `action`; milestone completion needs payment_status='paid' first. Previous test files (/app/backend/tests/test_tenant_stripe.py, test_tenants_v2.py) target an older API surface — the new file fully replaces their coverage for the merged build.",
+  "rca of the issue": "N/A — no backend issues. Two initial test failures were test-code mismatches with the real API contract (audit `event_name` field, milestone payment-gating rule) and were corrected in the test file."
+}

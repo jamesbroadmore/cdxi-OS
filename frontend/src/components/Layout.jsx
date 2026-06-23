@@ -207,14 +207,14 @@ export default function Layout({ children }) {
       {/* ── Sidebar ─────────────────────────────────────── */}
       <aside
         className={`
-          fixed inset-y-0 left-0 z-40 flex flex-col border-r border-zinc-800/70 bg-zinc-950
+          fixed inset-y-0 left-0 z-40 flex flex-col border-r border-zinc-800 bg-[#0b0b0f] shadow-xl shadow-black/30
           transition-all duration-200 ease-in-out
           ${collapsed ? "w-[68px]" : "w-60"}
           ${mobileOpen ? "translate-x-0" : "-translate-x-full lg:translate-x-0"}
         `}
       >
         {/* Logo */}
-        <div className={`flex items-center h-14 border-b border-zinc-800/70 ${collapsed ? "justify-center" : "px-5"}`}>
+        <div className={`flex items-center h-14 border-b border-zinc-800 ${collapsed ? "justify-center" : "px-5"}`}>
           <CdxiLogo collapsed={collapsed} />
         </div>
 
@@ -267,7 +267,7 @@ export default function Layout({ children }) {
         </nav>
 
         {/* Footer — user + sign out */}
-        <div className="border-t border-zinc-800/70 p-2">
+        <div className="border-t border-zinc-800 p-2">
           {!collapsed ? (
             <div className="flex items-center gap-2 rounded-lg px-2 py-2 hover:bg-zinc-900/70 transition-colors">
               <div className="h-7 w-7 rounded-full bg-indigo-500/20 border border-indigo-500/30 flex items-center justify-center shrink-0">
@@ -311,7 +311,7 @@ export default function Layout({ children }) {
         <button
           onClick={() => setCollapsed((c) => !c)}
           title={collapsed ? "Expand sidebar" : "Collapse sidebar"}
-          className="hidden lg:flex absolute -right-3 top-[52px] z-50 h-6 w-6 items-center justify-center rounded-full border border-zinc-700 bg-zinc-950 text-zinc-400 hover:text-white hover:border-zinc-500 shadow transition-colors"
+          className="hidden lg:flex absolute -right-3 top-[52px] z-50 h-6 w-6 items-center justify-center rounded-full border border-zinc-700 bg-[#0b0b0f] text-zinc-400 hover:text-white hover:border-zinc-500 shadow transition-colors"
         >
           {collapsed ? <ChevronRight size={12} /> : <ChevronLeft size={12} />}
         </button>
@@ -320,7 +320,7 @@ export default function Layout({ children }) {
       {/* ── Main ────────────────────────────────────────── */}
       <div className={`flex flex-col flex-1 overflow-hidden transition-all duration-200 ${collapsed ? "lg:pl-[68px]" : "lg:pl-60"}`}>
         {/* Top bar */}
-        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-zinc-800/70 bg-zinc-950/90 backdrop-blur px-4 lg:px-6">
+        <header className="sticky top-0 z-20 flex h-14 items-center justify-between border-b border-zinc-800 bg-[#0b0b0f] px-4 lg:px-6">
           <button
             onClick={() => setMobileOpen((o) => !o)}
             className="lg:hidden text-zinc-400 hover:text-white"

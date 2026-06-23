@@ -1,107 +1,117 @@
 import React, { useState } from "react";
-import { Link, useNavigate, Navigate } from "react-router-dom";
-import { motion } from "framer-motion";
-import { useAuth } from "../context/AuthContext";
-import { Button, Input, Label } from "../components/ui/Primitives";
-import { Loader2, Sparkles, ArrowRight } from "lucide-react";
+import { useNavigate, useLocation } from "react-router-dom";
+import { useAuth } from "@/context/AuthContext";
+import { api, getErrorMessage } from "@/lib/api";
+import { Zap, Eye, EyeOff } from "lucide-react";
 
 export default function Login() {
-  const { user, login } = useAuth();
-  const [email, setEmail] = useState("parker@cdxi.au");
-  const [password, setPassword] = useState("220191");
+  const { login } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  const from = location.state?.from?.pathname || "/";
+
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPass, setShowPass] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [err, setErr] = useState("");
-  const nav = useNavigate();
+  const [error, setError] = useState("");
 
-  if (user) return <Navigate to="/" replace />;
-
-  const onSubmit = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    setErr(""); setLoading(true);
+    setError("");
+    setLoading(true);
     try {
-      await login(email.trim(), password);
-      nav("/");
-    } catch (ex) {
-      const d = ex?.response?.data?.detail;
-      setErr(typeof d === "string" ? d : "Login failed");
+      const { data } = await api.post("/auth/login", { email, password });
+      login(data.access_token, data.user);
+      navigate(from, { replace: true });
+    } catch (err) {
+      setError(getErrorMessage(err, "Invalid credentials"));
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen relative overflow-hidden bg-background text-foreground grid lg:grid-cols-2">
-      <div className="grid-bg absolute inset-0 opacity-30 pointer-events-none" />
-      <div className="absolute inset-0 ambient-glow pointer-events-none" />
+    <div className="flex min-h-screen items-center justify-center bg-zinc-950 px-4">
+      {/* Background grid */}
+      <div className="pointer-events-none fixed inset-0 bg-[linear-gradient(to_right,#27272a_1px,transparent_1px),linear-gradient(to_bottom,#27272a_1px,transparent_1px)] bg-[size:64px_64px] opacity-20" />
+      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(ellipse_at_center,_rgba(99,102,241,0.06)_0%,transparent_70%)]" />
 
-      <div className="relative z-10 flex flex-col justify-between p-10 lg:p-14">
-        <div className="flex flex-col leading-none">
-          <div className="font-logo text-3xl lowercase tracking-tight">cdxi</div>
-          <div className="text-[10px] uppercase tracking-[0.3em] text-muted-foreground mt-1.5">Internal · Brands & Clients</div>
+      <div className="relative w-full max-w-sm">
+        {/* Logo */}
+        <div className="mb-8 flex flex-col items-center gap-3">
+          <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-indigo-500/10 border border-indigo-500/20 shadow-lg shadow-indigo-500/5">
+            <Zap size={22} className="text-indigo-400" />
+          </div>
+          <div className="text-center">
+            <h1 className="text-xl font-bold text-white tracking-tight">cdxi | OS</h1>
+            <p className="text-xs text-zinc-500 mt-1">Agency Operating System</p>
+          </div>
         </div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}
-          className="max-w-lg"
-        >
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full glass text-xs mb-5">
-            <Sparkles className="w-3 h-3 text-blue-500" /> Internal · v1.0
-          </div>
-          <h1 className="font-display text-5xl lg:text-6xl font-bold leading-[1.02] tracking-tight">
-            Run cdxi.<br />
-            <span className="text-muted-foreground">Every brand. Every client.</span>
-          </h1>
-          <p className="mt-6 text-muted-foreground leading-relaxed">
-            cdxi OS is our internal operating system — the single control layer we use to run cdxi, its brands, its clients and the delivery engine behind everything we ship.
-          </p>
-          <div className="mt-8 flex flex-wrap gap-2">
-            {["Atlas · Command", "Forge · Automations", "Helix · Agents", "Vault · Knowledge", "Pulse · Analytics"].map((n) => (
-              <div key={n} className="px-3 py-1.5 rounded-lg glass text-xs font-mono">{n}</div>
-            ))}
-          </div>
-        </motion.div>
+        {/* Card */}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900/80 backdrop-blur p-6 shadow-xl shadow-black/20">
+          <h2 className="text-sm font-semibold text-zinc-200 mb-5">Sign in to your workspace</h2>
 
-        <div className="text-xs text-muted-foreground">© 2026 cdxi · Internal tool. Restricted to cdxi operators and invited collaborators.</div>
-      </div>
-
-      <div className="relative z-10 flex items-center justify-center p-8 lg:p-14">
-        <motion.form
-          onSubmit={onSubmit}
-          initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.4, delay: 0.1 }}
-          className="glass w-full max-w-md rounded-2xl p-8"
-          data-testid="login-form"
-        >
-          <h2 className="font-display text-2xl font-semibold">Sign in</h2>
-          <p className="text-sm text-muted-foreground mt-1">cdxi operators only.</p>
-
-          <div className="mt-6 space-y-4">
-            <div>
-              <Label>Email</Label>
-              <Input value={email} onChange={(e) => setEmail(e.target.value)} required type="email" placeholder="you@company.com" data-testid="login-email" />
+          {error && (
+            <div className="mb-4 rounded-lg border border-red-500/20 bg-red-500/5 px-3 py-2.5">
+              <p className="text-xs text-red-400">{error}</p>
             </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="space-y-4">
             <div>
-              <Label>Password</Label>
-              <Input value={password} onChange={(e) => setPassword(e.target.value)} required type="password" placeholder="••••••••" data-testid="login-password" />
+              <label className="mb-1.5 block text-xs font-medium text-zinc-400">Email address</label>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="you@example.com"
+                required
+                autoFocus
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2.5 text-sm text-white placeholder-zinc-500 outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+              />
             </div>
-            {err && <div className="text-xs text-rose-500" data-testid="login-error">{err}</div>}
-            <Button type="submit" className="w-full" data-testid="login-submit" disabled={loading}>
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <>Enter cdxi OS <ArrowRight className="w-4 h-4" /></>}
-            </Button>
-          </div>
 
-          <div className="my-6 flex items-center gap-3 text-[10px] uppercase tracking-widest text-muted-foreground">
-            <div className="h-px flex-1 bg-border" /> or <div className="h-px flex-1 bg-border" />
-          </div>
+            <div>
+              <label className="mb-1.5 block text-xs font-medium text-zinc-400">Password</label>
+              <div className="relative">
+                <input
+                  type={showPass ? "text" : "password"}
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="••••••••"
+                  required
+                  className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2.5 pr-10 text-sm text-white placeholder-zinc-500 outline-none focus:border-indigo-500/60 focus:ring-1 focus:ring-indigo-500/20 transition-all"
+                />
+                <button
+                  type="button"
+                  onClick={() => setShowPass((s) => !s)}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 text-zinc-500 hover:text-zinc-300"
+                >
+                  {showPass ? <EyeOff size={14} /> : <Eye size={14} />}
+                </button>
+              </div>
+            </div>
 
-          <div className="text-center text-sm">
-            New operator?{" "}
-            <Link to="/register" className="text-blue-500 hover:text-blue-400 font-semibold" data-testid="login-register-link">Request access</Link>
-          </div>
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-indigo-500 px-4 py-2.5 text-sm font-medium text-white hover:bg-indigo-600 focus:ring-2 focus:ring-indigo-500/20 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
+            >
+              {loading ? (
+                <span className="flex items-center justify-center gap-2">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
+                  Signing in…
+                </span>
+              ) : "Sign in"}
+            </button>
+          </form>
+        </div>
 
-          <div className="mt-6 rounded-xl border border-border bg-muted/40 p-3 text-xs font-mono text-muted-foreground">
-            demo · parker@cdxi.au / 220191
-          </div>
-        </motion.form>
+        <p className="mt-6 text-center text-[11px] text-zinc-600 font-mono">
+          cdxi ventures · confidential
+        </p>
       </div>
     </div>
   );

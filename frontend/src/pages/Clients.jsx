@@ -1,139 +1,245 @@
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Plus, Pencil, Trash2, Share2, Copy, Check } from "lucide-react";
-import api from "../lib/api";
-import { Button, Input, Label, Select, Textarea, Card, Badge } from "../components/ui/Primitives";
-import Modal from "../components/Modal";
-import { initials } from "../lib/utils";
+import React, { useEffect, useState, useCallback } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import { api, formatCurrency, formatDate } from "@/lib/api";
+import { toast } from "sonner";
+import {
+  Plus, Search, Filter, ArrowUpRight, Users, TrendingUp,
+  ChevronDown, Tag, AlertCircle, RefreshCw
+} from "lucide-react";
 
-const STATUS_TONE = { active: "success", prospect: "info", at_risk: "warning", churned: "danger" };
+const LIFECYCLE_OPTS = ["lead","qualified","onboarding","active","renewal","churned"];
+const STATUS_OPTS = ["prospect","active","at_risk","churned","paused"];
+const BILLING_OPTS = ["hourly","retainer","consumption","hybrid","fixed"];
 
-export default function Clients() {
-  const [clients, setClients] = useState([]);
-  const [open, setOpen] = useState(false);
-  const [editing, setEditing] = useState(null);
-  const [shareFor, setShareFor] = useState(null);
-  const [shareUrl, setShareUrl] = useState("");
-  const [copied, setCopied] = useState(false);
-  const [form, setForm] = useState({ name: "", email: "", company: "", phone: "", status: "active", health_score: 80, notes: "" });
+function StatusBadge({ status }) {
+  const map = {
+    active: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    prospect: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    at_risk: "bg-red-500/10 text-red-400 border-red-500/20",
+    churned: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+    paused: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${map[status] || "bg-zinc-800 text-zinc-400"}`}>
+      {status?.replace(/_/g, " ")}
+    </span>
+  );
+}
 
-  const load = async () => { const { data } = await api.get("/clients"); setClients(data); };
-  useEffect(() => { load(); }, []);
+function LifecycleBadge({ stage }) {
+  const map = {
+    lead: "text-zinc-400",
+    qualified: "text-blue-400",
+    onboarding: "text-violet-400",
+    active: "text-emerald-400",
+    renewal: "text-amber-400",
+    churned: "text-red-400",
+  };
+  return <span className={`text-xs font-medium ${map[stage] || "text-zinc-500"}`}>{stage}</span>;
+}
 
-  const onSubmit = async (e) => {
+function HealthBar({ score }) {
+  const color = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="h-1.5 w-16 rounded-full bg-zinc-800">
+        <div className={`h-full rounded-full ${color}`} style={{ width: `${score}%` }} />
+      </div>
+      <span className="text-xs font-mono text-zinc-400">{Math.round(score)}</span>
+    </div>
+  );
+}
+
+function NewClientModal({ open, onClose, onCreated }) {
+  const [form, setForm] = useState({ name: "", email: "", billing_model: "hourly", lifecycle_stage: "lead", status: "prospect" });
+  const [loading, setLoading] = useState(false);
+
+  if (!open) return null;
+
+  const submit = async (e) => {
     e.preventDefault();
-    const payload = { ...form, health_score: Number(form.health_score) || 0 };
-    if (editing) await api.put(`/clients/${editing.id}`, payload);
-    else await api.post("/clients", payload);
-    setOpen(false); setEditing(null);
-    setForm({ name: "", email: "", company: "", phone: "", status: "active", health_score: 80, notes: "" });
-    load();
-  };
-
-  const onDelete = async (c) => {
-    if (!window.confirm(`Delete client ${c.name}?`)) return;
-    await api.delete(`/clients/${c.id}`); load();
-  };
-
-  const openNew = () => { setEditing(null); setForm({ name: "", email: "", company: "", phone: "", status: "active", health_score: 80, notes: "" }); setOpen(true); };
-  const openEdit = (c) => { setEditing(c); setForm({ name: c.name, email: c.email || "", company: c.company || "", phone: c.phone || "", status: c.status, health_score: c.health_score, notes: c.notes || "" }); setOpen(true); };
-
-  const share = async (c) => {
-    const { data } = await api.post(`/clients/${c.id}/share`, {});
-    const url = `${window.location.origin}/portal/${data.share_token}`;
-    setShareFor(c); setShareUrl(url); setCopied(false);
+    setLoading(true);
+    try {
+      const { data } = await api.post("/clients", form);
+      toast.success(`Client "${data.name}" created`);
+      onCreated(data);
+      onClose();
+      setForm({ name: "", email: "", billing_model: "hourly", lifecycle_stage: "lead", status: "prospect" });
+    } catch (err) {
+      toast.error(err?.response?.data?.detail || "Failed to create client");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
-    <div className="p-6 lg:p-8" data-testid="clients">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <div className="cdxi-label">Clients</div>
-          <h1 className="font-display text-3xl font-bold tracking-tight">Accounts</h1>
-          <p className="text-sm text-muted-foreground mt-1">All cdxi client relationships, health and portal access in one place.</p>
-        </div>
-        <Button onClick={openNew} data-testid="new-client-btn"><Plus className="w-4 h-4" /> New client</Button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4">
-        {clients.map((c, i) => (
-          <motion.div key={c.id} initial={{ opacity: 0, y: 6 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: i * 0.03 }}>
-            <Card className="p-5 h-full flex flex-col" data-testid={`client-card-${c.id}`}>
-              <div className="flex items-start gap-3">
-                <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-blue-500 to-indigo-600 text-white grid place-items-center font-semibold">
-                  {initials(c.name)}
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold truncate">{c.name}</div>
-                  <div className="text-xs text-muted-foreground truncate">{c.company || c.email || "—"}</div>
-                </div>
-                <Badge tone={STATUS_TONE[c.status] || "muted"}>{c.status.replace("_", " ")}</Badge>
-              </div>
-              <div className="mt-4">
-                <div className="flex items-center justify-between text-xs">
-                  <span className="cdxi-label">Health</span>
-                  <span className="font-mono">{c.health_score}</span>
-                </div>
-                <div className="mt-1.5 h-1.5 rounded-full bg-muted overflow-hidden">
-                  <div className="h-full rounded-full bg-gradient-to-r from-rose-500 via-amber-500 to-emerald-500" style={{ width: `${c.health_score}%` }} />
-                </div>
-              </div>
-              {c.notes && <div className="mt-3 text-xs text-muted-foreground line-clamp-2">{c.notes}</div>}
-              <div className="mt-auto pt-4 flex items-center gap-1.5">
-                <Button size="sm" variant="ghost" onClick={() => openEdit(c)} data-testid={`client-edit-${c.id}`}><Pencil className="w-3 h-3" /> Edit</Button>
-                <Button size="sm" variant="ghost" onClick={() => share(c)} data-testid={`client-share-${c.id}`}><Share2 className="w-3 h-3" /> Portal</Button>
-                <Button size="sm" variant="ghost" className="ml-auto text-rose-500 hover:bg-rose-500/10" onClick={() => onDelete(c)}><Trash2 className="w-3 h-3" /></Button>
-              </div>
-            </Card>
-          </motion.div>
-        ))}
-        {clients.length === 0 && (
-          <div className="col-span-full py-14 text-center text-sm text-muted-foreground">No clients yet — create your first account.</div>
-        )}
-      </div>
-
-      <Modal open={open} onClose={() => setOpen(false)} title={editing ? "Edit client" : "New client"}>
-        <form onSubmit={onSubmit} className="space-y-4" data-testid="client-form">
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Name</Label><Input required value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} data-testid="client-name" /></div>
-            <div><Label>Company</Label><Input value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} /></div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+      <div className="w-full max-w-md rounded-xl border border-zinc-800 bg-zinc-900 p-6 shadow-2xl">
+        <h3 className="text-sm font-semibold text-white mb-4">New Client</h3>
+        <form onSubmit={submit} className="space-y-3">
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Name *</label>
+            <input
+              required value={form.name} onChange={e => setForm({...form, name: e.target.value})}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-indigo-500/60 focus:outline-none"
+              placeholder="Company or person name"
+            />
           </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div><Label>Email</Label><Input type="email" value={form.email} onChange={(e) => setForm({ ...form, email: e.target.value })} /></div>
-            <div><Label>Phone</Label><Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} /></div>
+          <div>
+            <label className="block text-xs text-zinc-400 mb-1">Email</label>
+            <input
+              type="email" value={form.email} onChange={e => setForm({...form, email: e.target.value})}
+              className="w-full rounded-lg border border-zinc-700 bg-zinc-800/50 px-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-indigo-500/60 focus:outline-none"
+              placeholder="contact@example.com"
+            />
           </div>
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label>Status</Label>
-              <Select value={form.status} onChange={(e) => setForm({ ...form, status: e.target.value })}>
-                <option value="active">Active</option>
-                <option value="prospect">Prospect</option>
-                <option value="at_risk">At risk</option>
-                <option value="churned">Churned</option>
-              </Select>
+              <label className="block text-xs text-zinc-400 mb-1">Billing Model</label>
+              <select value={form.billing_model} onChange={e => setForm({...form, billing_model: e.target.value})}
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:outline-none">
+                {BILLING_OPTS.map(o => <option key={o}>{o}</option>)}
+              </select>
             </div>
-            <div><Label>Health (0–100)</Label><Input type="number" value={form.health_score} onChange={(e) => setForm({ ...form, health_score: e.target.value })} /></div>
+            <div>
+              <label className="block text-xs text-zinc-400 mb-1">Lifecycle Stage</label>
+              <select value={form.lifecycle_stage} onChange={e => setForm({...form, lifecycle_stage: e.target.value})}
+                className="w-full rounded-lg border border-zinc-700 bg-zinc-800 px-3 py-2 text-sm text-white focus:outline-none">
+                {LIFECYCLE_OPTS.map(o => <option key={o}>{o}</option>)}
+              </select>
+            </div>
           </div>
-          <div><Label>Notes</Label><Textarea value={form.notes} onChange={(e) => setForm({ ...form, notes: e.target.value })} /></div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setOpen(false)}>Cancel</Button>
-            <Button type="submit" data-testid="client-save">{editing ? "Save" : "Create"}</Button>
+          <div className="flex justify-end gap-2 pt-2">
+            <button type="button" onClick={onClose} className="rounded-lg px-4 py-2 text-sm text-zinc-400 hover:text-white hover:bg-zinc-800 transition-colors">Cancel</button>
+            <button type="submit" disabled={loading} className="rounded-lg bg-indigo-500 px-4 py-2 text-sm text-white font-medium hover:bg-indigo-600 disabled:opacity-50 transition-colors">
+              {loading ? "Creating…" : "Create Client"}
+            </button>
           </div>
         </form>
-      </Modal>
+      </div>
+    </div>
+  );
+}
 
-      <Modal open={!!shareFor} onClose={() => setShareFor(null)} title={`Client Portal — ${shareFor?.name || ""}`} width="md">
-        <p className="text-sm text-muted-foreground mb-3">Share this secure link with your client. They'll see projects, proposals and deliverables — read-only.</p>
-        <div className="flex items-center gap-2 p-2.5 rounded-xl border border-border bg-muted/30 font-mono text-xs break-all" data-testid="share-url">
-          {shareUrl}
+export default function Clients() {
+  const navigate = useNavigate();
+  const [clients, setClients] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
+  const [statusFilter, setStatusFilter] = useState("");
+  const [showModal, setShowModal] = useState(false);
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const params = {};
+      if (statusFilter) params.status = statusFilter;
+      const { data } = await api.get("/clients", { params });
+      setClients(data);
+    } catch (err) {
+      if (err?.response?.status !== 401) toast.error("Failed to load clients");
+    } finally {
+      setLoading(false);
+    }
+  }, [statusFilter]);
+
+  useEffect(() => { load(); }, [load]);
+
+  const filtered = clients.filter(c =>
+    !search || c.name.toLowerCase().includes(search.toLowerCase()) ||
+    c.email?.toLowerCase().includes(search.toLowerCase())
+  );
+
+  return (
+    <div className="p-6 lg:p-8 space-y-5">
+      {/* Header */}
+      <div className="flex items-center justify-between">
+        <div>
+          <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">cdxi / crm</p>
+          <h1 className="mt-1 text-2xl font-bold text-white tracking-tight">Clients</h1>
         </div>
-        <div className="mt-3 flex justify-end gap-2">
-          <Button variant="ghost" onClick={() => setShareFor(null)}>Close</Button>
-          <Button onClick={() => { navigator.clipboard.writeText(shareUrl); setCopied(true); setTimeout(() => setCopied(false), 1500); }} data-testid="share-copy">
-            {copied ? <><Check className="w-3.5 h-3.5" /> Copied</> : <><Copy className="w-3.5 h-3.5" /> Copy link</>}
-          </Button>
+        <button
+          onClick={() => setShowModal(true)}
+          className="flex items-center gap-2 rounded-lg bg-indigo-500 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-600 transition-colors"
+        >
+          <Plus size={15} />
+          New Client
+        </button>
+      </div>
+
+      {/* Filters */}
+      <div className="flex items-center gap-3 flex-wrap">
+        <div className="relative">
+          <Search size={13} className="absolute left-3 top-1/2 -translate-y-1/2 text-zinc-500" />
+          <input
+            value={search} onChange={e => setSearch(e.target.value)}
+            placeholder="Search clients…"
+            className="rounded-lg border border-zinc-700 bg-zinc-900 pl-8 pr-3 py-2 text-sm text-white placeholder-zinc-500 focus:border-indigo-500/60 focus:outline-none w-56"
+          />
         </div>
-      </Modal>
+        <select
+          value={statusFilter} onChange={e => setStatusFilter(e.target.value)}
+          className="rounded-lg border border-zinc-700 bg-zinc-900 px-3 py-2 text-sm text-zinc-300 focus:outline-none"
+        >
+          <option value="">All statuses</option>
+          {STATUS_OPTS.map(s => <option key={s} value={s}>{s}</option>)}
+        </select>
+        <button onClick={load} className="flex items-center gap-1.5 rounded-lg border border-zinc-700 px-3 py-2 text-xs text-zinc-400 hover:text-white hover:border-zinc-600 transition-colors">
+          <RefreshCw size={12} />
+          Refresh
+        </button>
+        <span className="ml-auto text-xs text-zinc-500">{filtered.length} record{filtered.length !== 1 ? "s" : ""}</span>
+      </div>
+
+      {/* Table */}
+      <div className="rounded-xl border border-zinc-800 bg-zinc-900 overflow-hidden">
+        {/* Header row */}
+        <div className="hidden lg:grid grid-cols-[2fr_1fr_1fr_1fr_1fr_80px] gap-4 border-b border-zinc-800 bg-zinc-900/50 px-5 py-3">
+          {["Client","Status","Lifecycle","Billing Model","Health",""].map(h => (
+            <div key={h} className="text-[10px] font-mono uppercase tracking-widest text-zinc-500">{h}</div>
+          ))}
+        </div>
+
+        {loading && (
+          <div className="flex items-center justify-center gap-2 py-12 text-zinc-500 text-sm">
+            <div className="h-4 w-4 animate-spin rounded-full border-2 border-zinc-700 border-t-indigo-400" />
+            Loading…
+          </div>
+        )}
+
+        {!loading && filtered.length === 0 && (
+          <div className="py-12 text-center text-xs text-zinc-600">
+            {search || statusFilter ? "No clients match filters" : "No clients yet"}
+          </div>
+        )}
+
+        {!loading && filtered.map((c, idx) => (
+          <button
+            key={c.id}
+            onClick={() => navigate(`/clients/${c.id}`)}
+            className="group grid w-full grid-cols-1 gap-2 border-b border-zinc-800/50 last:border-b-0 px-5 py-4 text-left hover:bg-zinc-800/30 transition-colors lg:grid-cols-[2fr_1fr_1fr_1fr_1fr_80px] lg:items-center lg:gap-4"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-8 w-8 shrink-0 rounded-lg bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-xs font-bold text-indigo-300">
+                {c.name[0].toUpperCase()}
+              </div>
+              <div>
+                <div className="text-sm font-medium text-white">{c.name}</div>
+                {c.email && <div className="text-xs text-zinc-500">{c.email}</div>}
+              </div>
+            </div>
+            <div><StatusBadge status={c.status} /></div>
+            <div><LifecycleBadge stage={c.lifecycle_stage} /></div>
+            <div className="text-xs text-zinc-400 capitalize">{c.billing_model}</div>
+            <div><HealthBar score={c.health_score ?? 100} /></div>
+            <div className="hidden lg:flex justify-end">
+              <ArrowUpRight size={15} className="text-zinc-600 group-hover:text-indigo-400 transition-colors" />
+            </div>
+          </button>
+        ))}
+      </div>
+
+      <NewClientModal open={showModal} onClose={() => setShowModal(false)} onCreated={c => { setClients(prev => [c, ...prev]); }} />
     </div>
   );
 }

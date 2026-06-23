@@ -1,218 +1,286 @@
-import React, { useEffect, useState } from "react";
-import { motion } from "framer-motion";
+import React, { useEffect, useState, useCallback } from "react";
+import { Link } from "react-router-dom";
+import { api, formatCurrency, formatDateTime } from "@/lib/api";
+import { toast } from "sonner";
 import {
-  ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip,
-  BarChart, Bar, Cell, CartesianGrid, LineChart, Line,
-} from "recharts";
-import {
-  TrendingUp, Users, Briefcase, Activity, Sparkles, ArrowUpRight,
-  Clock, Gauge, Rocket,
+  Users, FolderKanban, TrendingUp, AlertCircle, Clock,
+  Bot, ArrowUpRight, Activity, ChevronRight, Timer, Eye
 } from "lucide-react";
-import api from "../lib/api";
-import { Card, Badge } from "../components/ui/Primitives";
-import { fmtMoney } from "../lib/utils";
-import { relativeTime } from "../lib/time";
 
-const STAGE_COLORS = {
-  lead: "#60a5fa", discovery: "#818cf8", proposal: "#a78bfa",
-  won: "#34d399", onboarding: "#22d3ee", delivery: "#f472b6",
-  growth: "#fbbf24", renewal: "#fb923c", lost: "#f87171",
-};
-
-function KpiCard({ label, value, delta, icon: Icon, accent = "text-blue-500", spark, sparkColor = "#3b82f6", i = 0 }) {
+function KpiCard({ label, value, sub, icon: Icon, accent = "default", trend }) {
+  const accents = {
+    default: "text-zinc-400 bg-zinc-800/50 border-zinc-700/50",
+    success: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
+    danger: "text-red-400 bg-red-500/10 border-red-500/20",
+    warning: "text-amber-400 bg-amber-500/10 border-amber-500/20",
+    indigo: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
+  };
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }}
-      transition={{ delay: i * 0.04, duration: 0.3 }}
-      className="relative"
-    >
-      <Card className="p-5 relative overflow-hidden">
-        <div className="flex items-center justify-between">
-          <div className="cdxi-label">{label}</div>
-          <div className={`w-8 h-8 rounded-lg bg-muted grid place-items-center ${accent}`}>
-            <Icon className="w-3.5 h-3.5" />
-          </div>
+    <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-5 flex flex-col gap-3">
+      <div className="flex items-center justify-between">
+        <div className={`rounded-lg border p-2 ${accents[accent]}`}>
+          <Icon size={16} />
         </div>
-        <div className="mt-3 font-mono text-3xl font-semibold tracking-tight">{value}</div>
-        {delta && (
-          <div className="mt-1 text-xs text-muted-foreground flex items-center gap-1">
-            <ArrowUpRight className="w-3 h-3 text-emerald-500" /> {delta}
-          </div>
+        {trend !== undefined && (
+          <span className={`text-xs font-mono ${ trend >= 0 ? "text-emerald-400" : "text-red-400" }`}>
+            {trend >= 0 ? "+" : ""}{trend}%
+          </span>
         )}
-        {spark && spark.length > 0 && (
-          <div className="h-10 -mx-1 mt-2 opacity-90">
-            <ResponsiveContainer>
-              <LineChart data={spark.map((v, idx) => ({ i: idx, v }))}>
-                <Line type="monotone" dataKey="v" stroke={sparkColor} strokeWidth={1.75} dot={false} />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        )}
-      </Card>
-    </motion.div>
+      </div>
+      <div>
+        <div className="text-2xl font-bold text-white tracking-tight">{value}</div>
+        <div className="text-xs text-zinc-500 mt-0.5">{label}</div>
+        {sub && <div className="text-xs text-zinc-600 mt-0.5">{sub}</div>}
+      </div>
+    </div>
+  );
+}
+
+function AgentStatusBadge({ status }) {
+  const map = {
+    complete: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+    escalated: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+    running: "bg-blue-500/10 text-blue-400 border-blue-500/20",
+    failed: "bg-red-500/10 text-red-400 border-red-500/20",
+    cancelled: "bg-zinc-500/10 text-zinc-400 border-zinc-500/20",
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider ${map[status] || map.cancelled}`}>
+      {status}
+    </span>
+  );
+}
+
+function HealthBar({ score }) {
+  const color = score >= 75 ? "bg-emerald-500" : score >= 50 ? "bg-amber-500" : "bg-red-500";
+  return (
+    <div className="flex items-center gap-2">
+      <div className="flex-1 rounded-full bg-zinc-800 h-1.5">
+        <div className={`h-full rounded-full ${color} transition-all`} style={{ width: `${score}%` }} />
+      </div>
+      <span className="text-xs text-zinc-400 font-mono w-8 text-right">{Math.round(score)}</span>
+    </div>
   );
 }
 
 export default function Dashboard() {
-  const [m, setM] = useState(null);
-  const [activity, setActivity] = useState([]);
+  const [data, setData] = useState(null);
+  const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    (async () => {
-      try {
-        const [d, a] = await Promise.all([
-          api.get("/dashboard/metrics"),
-          api.get("/activity"),
-        ]);
-        setM(d.data);
-        setActivity(a.data);
-      } catch (e) {}
-    })();
+  const load = useCallback(async () => {
+    try {
+      const { data: d } = await api.get("/dashboard");
+      setData(d);
+    } catch (err) {
+      if (err?.response?.status !== 401) toast.error("Failed to load dashboard");
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
-  if (!m) {
+  useEffect(() => { load(); }, [load]);
+
+  if (loading) {
     return (
-      <div className="p-8 text-sm text-muted-foreground" data-testid="dashboard-loading">Loading command deck…</div>
+      <div className="flex h-96 items-center justify-center">
+        <div className="h-6 w-6 animate-spin rounded-full border-2 border-zinc-700 border-t-indigo-400" />
+      </div>
     );
   }
 
+  const kpis = data || {};
+
   return (
-    <div className="relative" data-testid="dashboard">
-      <div className="ambient-glow relative p-6 lg:p-8">
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <div className="cdxi-label">Atlas · Command Deck</div>
-            <h1 className="font-display text-3xl lg:text-4xl font-bold tracking-tight mt-1">
-              Running cdxi.
-            </h1>
-            <p className="text-muted-foreground mt-1 text-sm">Live view across cdxi's brands, clients, delivery and AI workforce.</p>
+    <div className="p-6 lg:p-8 space-y-6">
+      {/* Header */}
+      <div>
+        <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">cdxi / overview</p>
+        <h1 className="mt-1 text-2xl font-bold text-white tracking-tight">Control Centre</h1>
+      </div>
+
+      {/* KPI Grid */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+        <KpiCard
+          label="Total Clients"
+          value={kpis.total_clients ?? 0}
+          sub={`${kpis.active_clients ?? 0} active`}
+          icon={Users}
+          accent="indigo"
+        />
+        <KpiCard
+          label="Active Projects"
+          value={kpis.active_projects ?? 0}
+          icon={FolderKanban}
+          accent="default"
+        />
+        <KpiCard
+          label="Revenue Pipeline"
+          value={formatCurrency(kpis.revenue_pipeline ?? 0)}
+          sub="outstanding"
+          icon={TrendingUp}
+          accent="success"
+        />
+        <KpiCard
+          label="Overdue AR"
+          value={formatCurrency(kpis.overdue_payments ?? 0)}
+          sub="past due date"
+          icon={AlertCircle}
+          accent={kpis.overdue_payments > 0 ? "danger" : "default"}
+        />
+      </div>
+
+      {/* Secondary KPIs */}
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-3">
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Clock size={14} className="text-zinc-500" />
+            <span className="text-xs text-zinc-500">Active Timers</span>
           </div>
-          <div className="flex items-center gap-2">
-            <Badge tone="success">● systems nominal</Badge>
-            <Badge tone="info">Helix · 6 agents online</Badge>
+          <div className="text-xl font-bold text-white">{kpis.active_timers ?? 0}</div>
+        </div>
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <Bot size={14} className="text-zinc-500" />
+            <span className="text-xs text-zinc-500">Pending Reviews</span>
+          </div>
+          <div className="text-xl font-bold text-white">
+            <span className={kpis.pending_reviews > 0 ? "text-amber-400" : ""}>{kpis.pending_reviews ?? 0}</span>
           </div>
         </div>
-
-        <div className="mt-8 grid grid-cols-2 md:grid-cols-3 xl:grid-cols-6 gap-4">
-          {(() => {
-            const trend = (m.revenue_trend || []).map((x) => x.revenue);
-            const stageVals = (m.pipeline_by_stage || []).map((x) => x.value);
-            const spark = (len, seed) => Array.from({ length: len }, (_, i) => (Math.sin(seed + i) + 1) * 50 + (i * 3));
-            return (
-              <>
-                <KpiCard i={0} label="Revenue · won" value={fmtMoney(m.revenue)} delta="+12% qoq" icon={TrendingUp} accent="text-emerald-500" spark={trend} sparkColor="#10b981" />
-                <KpiCard i={1} label="Pipeline open" value={fmtMoney(m.pipeline)} delta={`${m.total_deals} deals`} icon={Gauge} accent="text-blue-500" spark={stageVals.length ? stageVals : trend} sparkColor="#3b82f6" />
-                <KpiCard i={2} label="MRR" value={fmtMoney(m.mrr)} delta="retainers est." icon={Activity} accent="text-indigo-500" spark={trend.map((v) => v / 12)} sparkColor="#6366f1" />
-                <KpiCard i={3} label="Client health" value={`${m.client_health}%`} delta={`${m.total_clients} clients`} icon={Users} accent="text-amber-500" spark={spark(8, m.client_health / 10)} sparkColor="#f59e0b" />
-                <KpiCard i={4} label="Active projects" value={m.active_projects} delta={`${m.open_tasks} open tasks`} icon={Briefcase} accent="text-rose-500" spark={spark(8, m.active_projects)} sparkColor="#f43f5e" />
-                <KpiCard i={5} label="Automation savings" value={fmtMoney(m.automation_savings)} delta="this quarter" icon={Sparkles} accent="text-cyan-500" spark={trend.map((v) => v * 0.08)} sparkColor="#06b6d4" />
-              </>
-            );
-          })()}
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+          <div className="flex items-center gap-2 mb-2">
+            <AlertCircle size={14} className="text-zinc-500" />
+            <span className="text-xs text-zinc-500">At-Risk Clients</span>
+          </div>
+          <div className="text-xl font-bold text-white">
+            <span className={kpis.at_risk_clients > 0 ? "text-red-400" : ""}>{kpis.at_risk_clients ?? 0}</span>
+          </div>
         </div>
       </div>
 
-      <div className="px-6 lg:px-8 pb-10 grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="lg:col-span-2 p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="cdxi-label">Pulse · 8-week revenue</div>
-              <h3 className="font-display text-xl font-semibold">Revenue flow</h3>
+      {/* Two-col layout */}
+      <div className="grid gap-6 lg:grid-cols-5">
+        {/* Recent Activity */}
+        <div className="lg:col-span-3 rounded-xl border border-zinc-800 bg-zinc-900">
+          <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Activity size={14} className="text-zinc-500" />
+              <span className="text-sm font-medium text-zinc-200">Recent Activity</span>
             </div>
-            <Badge tone="info">Live</Badge>
           </div>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <AreaChart data={m.revenue_trend}>
-                <defs>
-                  <linearGradient id="rev" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="#3b82f6" stopOpacity={0.45} />
-                    <stop offset="100%" stopColor="#3b82f6" stopOpacity={0} />
-                  </linearGradient>
-                </defs>
-                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="week" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 11 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
-                <Area type="monotone" dataKey="revenue" stroke="#3b82f6" strokeWidth={2} fill="url(#rev)" />
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="p-6">
-          <div className="flex items-center justify-between mb-4">
-            <div>
-              <div className="cdxi-label">Pipeline · by stage</div>
-              <h3 className="font-display text-xl font-semibold">Stage mix</h3>
-            </div>
-            <Badge tone="muted">{m.total_deals} deals</Badge>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <BarChart data={m.pipeline_by_stage}>
-                <CartesianGrid stroke="hsl(var(--border))" strokeDasharray="3 3" vertical={false} />
-                <XAxis dataKey="stage" stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} />
-                <YAxis stroke="hsl(var(--muted-foreground))" tick={{ fontSize: 10 }} axisLine={false} tickLine={false} tickFormatter={(v) => `$${(v / 1000).toFixed(0)}k`} />
-                <Tooltip contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", borderRadius: 12, fontSize: 12 }} />
-                <Bar dataKey="value" radius={[6, 6, 0, 0]}>
-                  {m.pipeline_by_stage.map((d, i) => (
-                    <Cell key={i} fill={STAGE_COLORS[d.stage] || "#60a5fa"} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </Card>
-
-        <Card className="lg:col-span-2 p-6">
-          <div className="flex items-center justify-between mb-3">
-            <div>
-              <div className="cdxi-label">Activity stream</div>
-              <h3 className="font-display text-xl font-semibold">Signal feed</h3>
-            </div>
-            <Badge tone="success">Realtime</Badge>
-          </div>
-          <div className="divide-y divide-border">
-            {activity.length === 0 && <div className="py-6 text-sm text-muted-foreground">No recent activity.</div>}
-            {activity.map((a, i) => (
-              <div key={i} className="flex items-center gap-3 py-3" data-testid={`activity-item-${i}`}>
-                <div className="w-7 h-7 rounded-lg bg-muted grid place-items-center">
-                  {a.type === "deal" ? <Gauge className="w-3.5 h-3.5 text-blue-500" /> :
-                   a.type === "client" ? <Users className="w-3.5 h-3.5 text-amber-500" /> :
-                   <Briefcase className="w-3.5 h-3.5 text-emerald-500" />}
+          <div className="divide-y divide-zinc-800/50">
+            {(kpis.recent_events || []).slice(0, 8).map((evt) => (
+              <div key={evt.event_id} className="flex items-start gap-3 px-4 py-3">
+                <div className="mt-0.5 h-1.5 w-1.5 rounded-full bg-indigo-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <div className="text-xs text-zinc-300 font-medium">{evt.event_name}</div>
+                  <div className="text-xs text-zinc-500">{evt.object_type} · {formatDateTime(evt.occurred_at)}</div>
                 </div>
-                <div className="flex-1">
-                  <div className="text-sm font-medium">{a.title}</div>
-                  <div className="text-[11px] text-muted-foreground">{a.subtitle}</div>
+              </div>
+            ))}
+            {(!kpis.recent_events || kpis.recent_events.length === 0) && (
+              <div className="px-4 py-8 text-center text-xs text-zinc-600">No activity yet</div>
+            )}
+          </div>
+        </div>
+
+        {/* Right panel */}
+        <div className="lg:col-span-2 space-y-4">
+          {/* Agent runs */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900">
+            <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <Bot size={14} className="text-zinc-500" />
+                <span className="text-sm font-medium text-zinc-200">Recent Agent Runs</span>
+              </div>
+              <Link to="/agents" className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+                View all <ChevronRight size={12} />
+              </Link>
+            </div>
+            <div className="divide-y divide-zinc-800/50">
+              {(kpis.recent_agent_runs || []).slice(0, 4).map((run) => (
+                <div key={run.id} className="flex items-center justify-between px-4 py-2.5">
+                  <div>
+                    <div className="text-xs text-zinc-300 capitalize">{run.agent_type?.replace(/_/g, " ")}</div>
+                    <div className="text-[10px] text-zinc-600">{formatDateTime(run.started_at)}</div>
+                  </div>
+                  <AgentStatusBadge status={run.execution_status} />
                 </div>
-                <div className="text-[10px] uppercase tracking-widest text-muted-foreground flex items-center gap-1">
-                  <Clock className="w-3 h-3" /> {relativeTime(a.at)}
+              ))}
+              {(!kpis.recent_agent_runs || kpis.recent_agent_runs.length === 0) && (
+                <div className="px-4 py-6 text-center text-xs text-zinc-600">No agent runs yet</div>
+              )}
+            </div>
+          </div>
+
+          {/* Health distribution */}
+          <div className="rounded-xl border border-zinc-800 bg-zinc-900 p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Activity size={14} className="text-zinc-500" />
+              <span className="text-sm font-medium text-zinc-200">Client Health</span>
+            </div>
+            <div className="space-y-2">
+              {[
+                { label: "Healthy (75–100)", key: "healthy", color: "bg-emerald-500" },
+                { label: "Moderate (50–74)", key: "moderate", color: "bg-amber-500" },
+                { label: "At Risk (0–49)", key: "at_risk", color: "bg-red-500" },
+              ].map(({ label, key, color }) => {
+                const total = Object.values(kpis.health_distribution || {}).reduce((a, b) => a + b, 0) || 1;
+                const count = kpis.health_distribution?.[key] || 0;
+                const pct = Math.round((count / total) * 100);
+                return (
+                  <div key={key}>
+                    <div className="flex justify-between text-xs text-zinc-500 mb-1">
+                      <span>{label}</span>
+                      <span>{count}</span>
+                    </div>
+                    <div className="h-1.5 rounded-full bg-zinc-800">
+                      <div className={`h-full rounded-full ${color}`} style={{ width: `${pct}%` }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Recent invoices */}
+      {kpis.recent_invoices && kpis.recent_invoices.length > 0 && (
+        <div className="rounded-xl border border-zinc-800 bg-zinc-900">
+          <div className="flex items-center justify-between border-b border-zinc-800 px-4 py-3">
+            <span className="text-sm font-medium text-zinc-200">Recent Invoices</span>
+            <Link to="/billing" className="text-xs text-indigo-400 hover:text-indigo-300 flex items-center gap-1">
+              View all <ChevronRight size={12} />
+            </Link>
+          </div>
+          <div className="divide-y divide-zinc-800/50">
+            {kpis.recent_invoices.map((inv) => (
+              <div key={inv.id} className="flex items-center justify-between px-4 py-3">
+                <div>
+                  <div className="text-xs font-medium text-zinc-300">{inv.invoice_number}</div>
+                  <div className="text-xs text-zinc-500">{inv.client_name} · due {inv.due_date}</div>
+                </div>
+                <div className="text-right">
+                  <div className="text-sm font-semibold text-white">{formatCurrency(inv.total_amount)}</div>
+                  <InvoiceStatusBadge status={inv.status} />
                 </div>
               </div>
             ))}
           </div>
-        </Card>
-
-        <Card className="p-6 relative overflow-hidden">
-          <div className="absolute -right-10 -top-10 w-48 h-48 rounded-full bg-blue-500/20 blur-3xl pointer-events-none" />
-          <div className="relative">
-            <div className="cdxi-label">Operating mode</div>
-            <h3 className="font-display text-2xl font-semibold mt-1">Executive</h3>
-            <p className="text-sm text-muted-foreground mt-2 leading-relaxed">You're running cdxi from the Atlas command deck. Switch modes for focus, building, or agent ops.</p>
-            <div className="mt-4 space-y-2">
-              {["Focus Mode", "Executive Mode", "Builder Mode", "Agent Ops"].map((m, i) => (
-                <div key={m} className={`flex items-center justify-between text-sm px-3 py-2 rounded-lg ${i === 1 ? "bg-foreground text-background" : "bg-muted/40"}`}>
-                  <div className="flex items-center gap-2">
-                    <Rocket className="w-3 h-3" /> {m}
-                  </div>
-                  {i === 1 && <Badge tone="accent">Active</Badge>}
-                </div>
-              ))}
-            </div>
-          </div>
-        </Card>
-      </div>
+        </div>
+      )}
     </div>
   );
+}
+
+function InvoiceStatusBadge({ status }) {
+  const map = {
+    draft: "text-zinc-400",
+    sent: "text-blue-400",
+    paid: "text-emerald-400",
+    overdue: "text-red-400",
+    disputed: "text-amber-400",
+  };
+  return <span className={`text-[10px] font-medium uppercase ${map[status] || "text-zinc-500"}`}>{status}</span>;
 }

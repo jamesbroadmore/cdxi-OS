@@ -1,122 +1,157 @@
+@import url("https://api.fontshare.com/v2/css?f[]=cabinet-grotesk@400,700,800,900&display=swap");
+@import url("https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap");
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  --background: 0 0% 98%;
-  --foreground: 240 10% 4%;
-  --muted: 240 5% 96%;
-  --muted-foreground: 240 4% 46%;
-  --card: 0 0% 100%;
-  --border: 240 6% 90%;
-  --accent: 221 83% 53%;
-}
-.dark {
-  --background: 240 10% 4%;
-  --foreground: 0 0% 98%;
-  --muted: 240 4% 10%;
-  --muted-foreground: 240 5% 64%;
-  --card: 240 6% 8%;
-  --border: 240 4% 16%;
-  --accent: 217 91% 60%;
+    color-scheme: dark;
 }
 
-html, body, #root { height: 100%; }
 body {
-  font-family: "Manrope", ui-sans-serif, system-ui;
-  background: hsl(var(--background));
-  color: hsl(var(--foreground));
-  font-feature-settings: "ss01", "cv11";
-  -webkit-font-smoothing: antialiased;
+    margin: 0;
+    font-family: "IBM Plex Sans", system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    background-color: #08080a;
+    color: #ffffff;
 }
 
-/* custom scrollbar */
-::-webkit-scrollbar { width: 10px; height: 10px; }
-::-webkit-scrollbar-track { background: transparent; }
+code,
+.mono,
+.font-mono {
+    font-family: "JetBrains Mono", ui-monospace, Menlo, monospace;
+}
+
+.font-display {
+    font-family: "Cabinet Grotesk", "IBM Plex Sans", sans-serif;
+    letter-spacing: -0.01em;
+}
+
+@layer base {
+    :root {
+        --background: 240 6% 4%;
+        --foreground: 0 0% 100%;
+        --card: 240 5% 7%;
+        --card-foreground: 0 0% 100%;
+        --popover: 240 5% 7%;
+        --popover-foreground: 0 0% 100%;
+        --primary: 0 0% 100%;
+        --primary-foreground: 0 0% 5%;
+        --secondary: 240 5% 10%;
+        --secondary-foreground: 0 0% 100%;
+        --muted: 240 5% 10%;
+        --muted-foreground: 240 5% 65%;
+        --accent: 240 5% 10%;
+        --accent-foreground: 0 0% 100%;
+        --destructive: 0 100% 60%;
+        --destructive-foreground: 0 0% 100%;
+        --border: 240 4% 16%;
+        --input: 240 4% 16%;
+        --ring: 225 100% 60%;
+        --radius: 0.125rem;
+    }
+}
+
+@layer base {
+    * {
+        @apply border-border;
+    }
+    html,
+    body,
+    #root {
+        height: 100%;
+    }
+    body {
+        @apply bg-background text-foreground;
+    }
+    ::selection {
+        background: #3366ff;
+        color: #ffffff;
+    }
+}
+
+/* Custom scrollbar for dark theme */
+::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+}
+::-webkit-scrollbar-track {
+    background: #08080a;
+}
 ::-webkit-scrollbar-thumb {
-  background: hsl(var(--border));
-  border-radius: 8px;
+    background: #27272a;
 }
-::-webkit-scrollbar-thumb:hover { background: hsl(var(--muted-foreground) / .4); }
-
-/* selection */
-::selection { background: hsl(var(--accent) / .3); color: hsl(var(--foreground)); }
-
-/* utility: glass card */
-.glass {
-  backdrop-filter: blur(24px);
-  background: hsl(var(--card) / 0.55);
-  border: 1px solid hsl(var(--border));
-}
-.dark .glass {
-  background: rgba(255,255,255,0.035);
-  border-color: rgba(255,255,255,0.08);
-  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 8px 32px rgba(0,0,0,0.35);
+::-webkit-scrollbar-thumb:hover {
+    background: #3f3f46;
 }
 
-.ambient-glow::before {
-  content: "";
-  position: absolute; inset: -40% -10% auto -10%;
-  height: 70%;
-  background: radial-gradient(ellipse at 50% 0%, hsla(217,91%,60%,0.18), transparent 60%);
-  filter: blur(40px);
-  pointer-events: none;
-  z-index: 0;
-}
-.dark .ambient-glow::before {
-  background: radial-gradient(ellipse at 50% 0%, hsla(217,91%,60%,0.22), transparent 60%);
+/* Grain texture overlay */
+.grain::before {
+    content: "";
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    opacity: 0.035;
+    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.95' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+    z-index: 100;
 }
 
-.grid-bg {
-  background-image:
-    linear-gradient(to right, hsl(var(--border) / .4) 1px, transparent 1px),
-    linear-gradient(to bottom, hsl(var(--border) / .4) 1px, transparent 1px);
-  background-size: 48px 48px;
-  mask-image: radial-gradient(ellipse at center, black 40%, transparent 75%);
+/* Striped pattern for blocked/unpaid milestones */
+.stripe-block {
+    background-image: repeating-linear-gradient(
+        45deg,
+        #1a1a1d,
+        #1a1a1d 6px,
+        #121214 6px,
+        #121214 12px
+    );
 }
 
-.font-display { font-family: "Cabinet Grotesk", "Manrope", sans-serif; letter-spacing: -0.02em; }
-.font-mono { font-family: "JetBrains Mono", ui-monospace; }
-.font-logo { font-family: "Righteous", "Cabinet Grotesk", sans-serif; letter-spacing: 0.01em; }
-
-/* label style */
-.cdxi-label {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: hsl(var(--muted-foreground));
+.progress-bar-track {
+    background: #1a1a1d;
+    border: 1px solid #27272a;
+}
+.progress-bar-fill {
+    background: #ffffff;
+    transition: width 450ms cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+.progress-bar-fill.delayed {
+    background: #ff3333;
+}
+.progress-bar-fill.completed {
+    background: #00ff66;
 }
 
-/* kanban column */
-.kanban-col {
-  min-width: 280px;
-  max-width: 280px;
-}
+@layer base {
+    [data-debug-wrapper="true"] {
+        display: contents !important;
+    }
 
-/* animations */
-@keyframes fadeUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+    [data-debug-wrapper="true"] > * {
+        margin-left: inherit;
+        margin-right: inherit;
+        margin-top: inherit;
+        margin-bottom: inherit;
+        padding-left: inherit;
+        padding-right: inherit;
+        padding-top: inherit;
+        padding-bottom: inherit;
+        column-gap: inherit;
+        row-gap: inherit;
+        gap: inherit;
+        border-left-width: inherit;
+        border-right-width: inherit;
+        border-top-width: inherit;
+        border-bottom-width: inherit;
+        border-left-style: inherit;
+        border-right-style: inherit;
+        border-top-style: inherit;
+        border-bottom-style: inherit;
+        border-left-color: inherit;
+        border-right-color: inherit;
+        border-top-color: inherit;
+        border-bottom-color: inherit;
+    }
 }
-.fade-up { animation: fadeUp 0.4s ease-out both; }
-
-/* markdown content in copilot */
-.prose-copilot p { margin: 0.5rem 0; line-height: 1.55; }
-.prose-copilot ul, .prose-copilot ol { padding-left: 1.25rem; margin: 0.5rem 0; }
-.prose-copilot li { margin: 0.25rem 0; }
-.prose-copilot code {
-  background: hsl(var(--muted));
-  padding: 1px 5px; border-radius: 4px;
-  font-size: 0.85em; font-family: "JetBrains Mono", monospace;
-}
-.prose-copilot h1, .prose-copilot h2, .prose-copilot h3 {
-  font-family: "Cabinet Grotesk", "Manrope", sans-serif;
-  letter-spacing: -0.01em;
-  font-weight: 600;
-  margin: 0.75rem 0 0.35rem;
-}
-.prose-copilot h1 { font-size: 1.15rem; }
-.prose-copilot h2 { font-size: 1.05rem; }
-.prose-copilot h3 { font-size: 0.95rem; }
-.prose-copilot strong { font-weight: 600; }

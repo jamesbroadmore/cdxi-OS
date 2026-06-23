@@ -1,127 +1,94 @@
-import React, { useEffect, useState } from "react";
+import React from "react";
+import "@/App.css";
 import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { AuthProvider, useAuth } from "./context/AuthContext";
-import { CopilotProvider, useCopilot } from "./context/CopilotContext";
+import { AuthProvider, useAuth } from "@/context/AuthContext";
+import { ThemeProvider } from "@/context/ThemeContext";
+import { Toaster } from "@/components/ui/sonner";
+import ErrorBoundary from "@/components/ErrorBoundary";
+import Layout from "@/components/Layout";
+import Login from "@/pages/Login";
+import Dashboard from "@/pages/Dashboard";
+import Clients from "@/pages/Clients";
+import ClientDetail from "@/pages/ClientDetail";
+import Projects from "@/pages/Projects";
+import Billing from "@/pages/Billing";
+import Contracts from "@/pages/Contracts";
+import AgentOps from "@/pages/AgentOps";
+import Settings from "@/pages/Settings";
+import PaymentStatus from "@/pages/PaymentStatus";
 
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Dashboard from "./pages/Dashboard";
-import CRM from "./pages/CRM";
-import Clients from "./pages/Clients";
-import Projects from "./pages/Projects";
-import Proposals from "./pages/Proposals";
-import Agents from "./pages/Agents";
-import Settings from "./pages/Settings";
-import ComingSoon from "./pages/ComingSoon";
-import ClientPortal from "./pages/ClientPortal";
-
-import Sidebar from "./components/Sidebar";
-import TopBar from "./components/TopBar";
-import CommandPalette from "./components/CommandPalette";
-import CopilotDock from "./components/CopilotDock";
-import Modal from "./components/Modal";
-import { Button, Input, Label } from "./components/ui/Primitives";
-import api from "./lib/api";
-import { Loader2 } from "lucide-react";
-
-function AppShell() {
-  const { user, loadWorkspaces } = useAuth();
-  const { open: copilot, setOpen: setCopilot, seedPrompt } = useCopilot();
-  const [collapsed, setCollapsed] = useState(false);
-  const [palette, setPalette] = useState(false);
-  const [wsModal, setWsModal] = useState(false);
-  const [wsName, setWsName] = useState("");
-
-  // Global Cmd+K
-  useEffect(() => {
-    const h = (e) => {
-      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        setPalette((p) => !p);
-      }
-      if ((e.metaKey || e.ctrlKey) && e.key === "/") {
-        e.preventDefault();
-        setCopilot((p) => !p);
-      }
-    };
-    window.addEventListener("keydown", h);
-    return () => window.removeEventListener("keydown", h);
-  }, [setCopilot]);
-
-  const createWs = async (e) => {
-    e.preventDefault();
-    if (!wsName.trim()) return;
-    await api.post("/workspaces", { name: wsName.trim(), description: "" });
-    setWsName(""); setWsModal(false);
-    await loadWorkspaces();
-  };
-
-  if (user === null) return (
-    <div className="min-h-screen grid place-items-center bg-background">
-      <Loader2 className="w-5 h-5 animate-spin text-muted-foreground" />
-    </div>
-  );
-  if (!user) return <Navigate to="/login" replace />;
-
-  return (
-    <div className="h-screen flex bg-background text-foreground relative overflow-hidden">
-      <Sidebar collapsed={collapsed} setCollapsed={setCollapsed} />
-      <div className="flex-1 flex flex-col min-w-0 relative">
-        <TopBar
-          onOpenCopilot={() => setCopilot(true)}
-          onOpenPalette={() => setPalette(true)}
-          onOpenNewWorkspace={() => setWsModal(true)}
-        />
-        <main className="flex-1 overflow-auto relative">
-          <div className="grid-bg absolute inset-0 opacity-[0.08] pointer-events-none" />
-          <div className="relative z-[1]">
-            <Routes>
-              <Route path="/" element={<Dashboard />} />
-              <Route path="/crm" element={<CRM />} />
-              <Route path="/clients" element={<Clients />} />
-              <Route path="/projects" element={<Projects />} />
-              <Route path="/proposals" element={<Proposals />} />
-              <Route path="/agents" element={<Agents />} />
-              <Route path="/settings" element={<Settings />} />
-              <Route path="/automations" element={<ComingSoon title="Automations" codename="Forge · Automation OS" description="Workflow canvas for cdxi's internal automations — triggers, AI steps, webhooks and approval gates across brands and clients." />} />
-              <Route path="/knowledge" element={<ComingSoon title="Knowledge" codename="Vault · Knowledge OS" description="cdxi's company brain — SOPs, playbooks, brand guidelines, semantic search and RAG-powered assistants." />} />
-              <Route path="/finance" element={<ComingSoon title="Finance" codename="Pulse · Finance OS" description="Revenue, invoicing, cashflow, forecasting and deal economics across cdxi and every brand under it." />} />
-              <Route path="/studio" element={<ComingSoon title="Studio" codename="Orbit · Venture Studio" description="Idea vault, validation lab and portfolio layer for new cdxi brands and ventures." />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </div>
-        </main>
+function Protected({ children }) {
+  const { user, checking } = useAuth();
+  const location = useLocation();
+  if (checking) {
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-zinc-950">
+        <div className="flex items-center gap-3 text-zinc-400">
+          <div className="h-5 w-5 animate-spin rounded-full border-2 border-zinc-700 border-t-indigo-400" />
+          <span className="text-sm font-mono tracking-widest uppercase text-zinc-500">Booting OS…</span>
+        </div>
       </div>
+    );
+  }
+  if (!user) return <Navigate to="/login" replace state={{ from: location }} />;
+  return children;
+}
 
-      <CommandPalette open={palette} onClose={() => setPalette(false)} onOpenCopilot={() => setCopilot(true)} />
-      <CopilotDock open={copilot} onClose={() => setCopilot(false)} seedPrompt={seedPrompt} />
-
-      <Modal open={wsModal} onClose={() => setWsModal(false)} title="New brand workspace">
-        <form onSubmit={createWs} className="space-y-4">
-          <div><Label>Brand name</Label><Input value={wsName} onChange={(e) => setWsName(e.target.value)} placeholder="e.g. cdxi · Growth Lab" data-testid="new-ws-name" autoFocus /></div>
-          <div className="flex justify-end gap-2">
-            <Button type="button" variant="ghost" onClick={() => setWsModal(false)}>Cancel</Button>
-            <Button type="submit" data-testid="new-ws-submit">Create</Button>
-          </div>
-        </form>
-      </Modal>
-    </div>
+function AppRoutes() {
+  return (
+    <Routes>
+      <Route path="/login" element={<Login />} />
+      <Route
+        path="/*"
+        element={
+          <Protected>
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/clients" element={<Clients />} />
+                <Route path="/clients/:id" element={<ClientDetail />} />
+                <Route path="/projects" element={<Projects />} />
+                <Route path="/billing" element={<Billing />} />
+                <Route path="/contracts" element={<Contracts />} />
+                <Route path="/agents" element={<AgentOps />} />
+                <Route path="/settings" element={<Settings />} />
+                <Route path="/payment-status" element={<PaymentStatus />} />
+                <Route path="*" element={<Navigate to="/" replace />} />
+              </Routes>
+            </Layout>
+          </Protected>
+        }
+      />
+    </Routes>
   );
 }
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <AuthProvider>
-        <CopilotProvider>
-          <Routes>
-            <Route path="/login" element={<Login />} />
-            <Route path="/register" element={<Register />} />
-            <Route path="/portal/:token" element={<ClientPortal />} />
-            <Route path="*" element={<AppShell />} />
-          </Routes>
-        </CopilotProvider>
-      </AuthProvider>
-    </BrowserRouter>
+    <div className="App">
+      <ErrorBoundary>
+        <BrowserRouter>
+          <ThemeProvider>
+            <AuthProvider>
+              <AppRoutes />
+              <Toaster
+                theme="dark"
+                position="top-right"
+                toastOptions={{
+                  style: {
+                    background: "#18181b",
+                    border: "1px solid #3f3f46",
+                    color: "#ffffff",
+                    borderRadius: "8px",
+                    fontFamily: "Inter, sans-serif",
+                    fontSize: "13px",
+                  },
+                }}
+              />
+            </AuthProvider>
+          </ThemeProvider>
+        </BrowserRouter>
+      </ErrorBoundary>
+    </div>
   );
 }

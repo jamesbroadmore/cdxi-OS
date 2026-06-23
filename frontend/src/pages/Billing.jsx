@@ -191,7 +191,7 @@ export default function Billing() {
     <div className="p-6 lg:p-8 space-y-5">
       <div>
         <p className="text-xs font-mono text-zinc-500 uppercase tracking-widest">cdxi / billing</p>
-        <h1 className="mt-1 text-2xl font-bold text-white tracking-tight">$$ Clock</h1>
+        <h1 className="mt-1 text-2xl font-bold text-white tracking-tight">Time &amp; Billing</h1>
       </div>
 
       {/* Summary cards */}

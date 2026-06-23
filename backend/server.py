@@ -699,12 +699,43 @@ def _next_contract_number() -> str:
 # Auth routes
 # ---------------------------------------------------------------------------
 
+# Brute-force login lockout: 5 failed attempts → 15 min cooldown per email
+_LOGIN_FAIL_WINDOW_S = 15 * 60
+_LOGIN_FAIL_LIMIT = 5
+_login_fails: Dict[str, List[float]] = {}
+
+
+def _login_locked(email: str) -> Optional[int]:
+    fails = _login_fails.get(email, [])
+    cutoff = time.time() - _LOGIN_FAIL_WINDOW_S
+    fails = [t for t in fails if t > cutoff]
+    _login_fails[email] = fails
+    if len(fails) >= _LOGIN_FAIL_LIMIT:
+        oldest = min(fails)
+        return int(oldest + _LOGIN_FAIL_WINDOW_S - time.time())
+    return None
+
+
+def _login_record_fail(email: str) -> None:
+    _login_fails.setdefault(email, []).append(time.time())
+
+
+def _login_clear(email: str) -> None:
+    _login_fails.pop(email, None)
+
+
 @api.post("/auth/login", response_model=LoginResponse)
 async def login(body: LoginRequest) -> LoginResponse:
     email = body.email.lower()
+    locked_for = _login_locked(email)
+    if locked_for and locked_for > 0:
+        mins = max(1, locked_for // 60)
+        raise HTTPException(status_code=429, detail=f"Too many failed attempts. Try again in ~{mins} minute(s).")
     user = await db.users.find_one({"email": email})
     if not user or not verify_password(body.password, user["password_hash"]):
+        _login_record_fail(email)
         raise HTTPException(status_code=401, detail="Invalid email or password")
+    _login_clear(email)
     token = create_access_token(user["id"], user["email"])
     await log_audit("auth.login", "user", user["id"], actor_id=user["id"])
     return LoginResponse(
@@ -2552,7 +2583,10 @@ async def copilot_chat(data: _CopilotMessage, user: dict = Depends(get_current_u
 
     chat = LlmChat(api_key=llm_key, session_id=data.session_id, system_message=system).with_model("openai", "gpt-5.2")
     try:
-        reply = await chat.send_message(UserMessage(text=data.message))
+        import asyncio as _asyncio
+        reply = await _asyncio.wait_for(chat.send_message(UserMessage(text=data.message)), timeout=45.0)
+    except _asyncio.TimeoutError:
+        raise HTTPException(504, "Atlas timed out — try a shorter prompt or retry.")
     except Exception as exc:
         raise HTTPException(500, f"LLM error: {exc}")
 

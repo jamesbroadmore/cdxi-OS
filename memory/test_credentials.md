@@ -1,23 +1,44 @@
-# cdxi OS — Test Credentials
+# cdxi | OS — Test Credentials
 
-## Admin account (pre-seeded on server startup, password rotated if .env changes)
-- **Email**: `parker@cdxi.au`
-- **Password**: `220191`
-- **Role**: `admin`
-- **Workspace**: "HQ Workspace" (auto-created on first boot, seeded with demo clients/deals/projects/proposals)
+## Admin
+- **Email:** `parker@cdxi.au`
+- **Password:** `220191`
+- **Role:** `admin`
+- **Default tenant:** `default` (display name: `cdxi`)
+- The admin user is **seeded on every backend boot**. If `ADMIN_PASSWORD` in `/app/backend/.env` ever changes, the seeder rotates the hash automatically.
 
-## Auth endpoints
-- `POST /api/auth/register` — { email, password, name, organization_name? }
-- `POST /api/auth/login` — { email, password }
+## Brand tenants (seeded on first boot)
+| id (slug) | display name |
+|---|---|
+| `default` | `cdxi` |
+| `fourtee2` | `fourtee2` |
+| `fleshsesh` | `fleshsesh` |
+
+## Auth
+- `POST /api/auth/login` → returns `{access_token, user}`
+- `GET  /api/auth/me` (Bearer token)
 - `POST /api/auth/logout`
-- `GET /api/auth/me`
-- Cookies: `access_token` (24h), `refresh_token` (7d). Also accepts `Authorization: Bearer <token>`.
+- **Brute-force lockout:** 5 failed attempts on the same email → HTTP 429 for ~15 minutes (in-memory; resets on backend restart).
 
-## Multi-tenant
-- `GET /api/workspaces` — list workspaces for current user
-- `POST /api/workspaces` — create workspace
-- All resource endpoints require `X-Workspace-Id` header (auto-added by frontend interceptor).
+## Atlas copilot
+- `POST /api/copilot/chat` body `{session_id, message, include_workspace?}` returns `{reply}`
+- Model: **GPT-5.2** via `EMERGENT_LLM_KEY`
+- 45 s server-side timeout
+- Per-tenant workspace snapshot auto-injected when `include_workspace` (default true)
 
-## Client Portal (unauthenticated)
-- `POST /api/clients/{id}/share` — issues `share_token` (authed)
-- `GET /api/portal/{share_token}` — public read-only view
+## Tenant switching
+- Admin can switch via the top-right tenant pill. Backend supports `X-Tenant-Id` header to scope queries.
+
+## Stripe
+- `STRIPE_API_KEY=sk_test_emergent` (test mode). Real keys swap into `/app/backend/.env`.
+
+## Smoke check (CLI)
+```bash
+TOKEN=$(curl -s -X POST $URL/api/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email":"parker@cdxi.au","password":"220191"}' \
+  | python3 -c "import sys,json;print(json.load(sys.stdin)['access_token'])")
+
+curl -s -H "Authorization: Bearer $TOKEN" $URL/api/tenants | jq
+curl -s -H "Authorization: Bearer $TOKEN" $URL/api/dashboard | jq
+```
